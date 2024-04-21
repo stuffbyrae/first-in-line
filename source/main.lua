@@ -15,14 +15,17 @@ local gfx <const> = pd.graphics
 local smp <const> = pd.sound.sampleplayer
 local fle <const> = pd.sound.fileplayer
 
-pd.display.setRefreshRate(20)
+pd.display.setRefreshRate(30)
 gfx.setBackgroundColor(gfx.kColorBlack)
+pd.setMenuImage(gfx.image.new('images/pause'))
 
+easy = true
 -- Save check
 function savecheck()
     save = pd.datastore.read()
     if save == nil then save = {} end
-    save.score = save.score or 0
+    save.score_easy = save.score_easy or 0
+    save.score_hard = save.score_hard or save.score or 0
     save.plays = save.plays or 0
     save.misses = save.misses or 0
 end

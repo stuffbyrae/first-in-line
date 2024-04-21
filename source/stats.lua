@@ -10,11 +10,13 @@ class('stats').extends(gfx.sprite) -- Create the scene's class
 function stats:init(...)
     stats.super.init(self)
     local args = {...} -- Arguments passed in through the scene management will arrive here
+    gfx.sprite.setAlwaysRedraw(false)
     
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
         menu:addMenuItem('return to title', function()
+            assets.click:play()
             scenemanager:switchscene(title)
         end)
     end
@@ -42,14 +44,17 @@ function stats:init(...)
             assets.image_bg:draw(0, 0)
         end
         assets.sasser:drawTextAligned('Stats', 200, 10, kTextAlignment.center)
-        assets.small:drawTextAligned('high score:               ' .. save.score, 200, 30, kTextAlignment.center)
-        assets.small:drawTextAligned('total plays:             ' .. save.plays, 200, 50, kTextAlignment.center)
+        assets.small:drawTextAligned('high score (easy):      ' .. save.score_easy, 200, 30, kTextAlignment.center)
+        assets.small:drawTextAligned('high score (hard):      ' .. save.score_hard, 200, 45, kTextAlignment.center)
+        assets.small:drawTextAligned('total plays:             ' .. save.plays, 200, 60, kTextAlignment.center)
+        assets.small:drawTextAligned('total misses:             ' .. save.misses, 200, 75, kTextAlignment.center)
         assets.sasser:drawTextAligned('Credits', 200, 100, kTextAlignment.center)
         assets.small:drawTextAligned('music - kevin macleod', 200, 120, kTextAlignment.center)
-        assets.small:drawTextAligned('sfx - pixabay.com', 200, 140, kTextAlignment.center)
-        assets.small:drawTextAligned('tanuk code lib - toad & schyzo', 200, 160, kTextAlignment.center)
-        assets.small:drawTextAligned('2024, made by rae', 200, 190, kTextAlignment.center)
-        assets.small:drawTextAligned('for playjam 5', 200, 210, kTextAlignment.center)
+        assets.small:drawTextAligned('sfx - pixabay.com', 200, 135, kTextAlignment.center)
+        assets.small:drawTextAligned('tanuk code lib - toad & schyzo', 200, 150, kTextAlignment.center)
+        assets.small:drawTextAligned('thanx - voxy, mag, toad', 200, 165, kTextAlignment.center)
+        assets.small:drawTextAligned('2024, made by rae', 200, 200, kTextAlignment.center)
+        assets.small:drawTextAligned('for playjam 5', 200, 215, kTextAlignment.center)
         assets.small:drawText('B back', 30, 215)
     end)
 

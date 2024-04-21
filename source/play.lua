@@ -52,13 +52,21 @@ function play:init(...)
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
+        menu:addMenuItem('return to title', function()
+            fademusic(0)
+            assets.crowd:stop()
+            assets.crowd_angry:stop()
+            assets.applause:stop()
+            assets.light_applause:stop()
+            assets.footsteps:stop()
+            scenemanager:switchscene(title)
+        end)
     end
     
     assets = { -- All assets go here. Images, sounds, fonts, etc.
         image_stage = gfx.image.new('images/stage'),
         image_spotlight = gfx.image.new('images/spotlight'),
         image_audience = gfx.image.new('images/audience'),
-        person = gfx.imagetable.new('images/person'),
         miss = gfx.imagetable.new('images/miss'),
         buttony = gfx.font.new('fonts/buttony'),
         speech = gfx.imagetable.new('images/speech'),
@@ -75,6 +83,8 @@ function play:init(...)
         whoosh = smp.new('audio/sfx/whoosh'),
         scratch = smp.new('audio/sfx/scratch'),
         patch = gfx.image.new('images/patch'),
+        cast = gfx.imagetable.new('images/cast'),
+        honk = smp.new('audio/sfx/honk'),
     }
     
     vars = { -- All variables go here. Args passed in from earlier, scene variables, etc.
@@ -89,6 +99,7 @@ function play:init(...)
         anim_person = pd.timer.new(1500, 1, 4.9),
         anim_person_x = pd.timer.new(3500, -25, 85),
         anim_cane = pd.timer.new(1, -158, -158),
+        person_rand = math.random(1, 4),
     }
     vars.playHandlers = {
     }
@@ -101,6 +112,9 @@ function play:init(...)
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
         assets.image_stage:draw(0, 0)
     end)
+
+    vars.cast_rand = math.random(1, #assets.cast)
+    assets.person = gfx.imagetable.new('images/person_' .. vars.person_rand)
 
     class('play_hud').extends(gfx.sprite)
     function play_hud:init()
@@ -124,6 +138,7 @@ function play:init(...)
                 assets.speech[2]:draw(0, 5)
             end
         end
+        assets.cast[vars.cast_rand]:draw(210, 40)
         assets.image_cane:draw(vars.anim_cane.value, 115)
         assets.buttony:drawTextAligned(vars.button_text_string, 190, 25, kTextAlignment.right)
     end
@@ -178,6 +193,8 @@ function play:hit(button, index)
     if vars.in_progress then
         vars.status = "just_hit"
         vars.anim_person:resetnew(1, 7, 7.9)
+        assets.honk:setRate(1 + ((math.random() / 2) - 0.5))
+        assets.honk:play()
         pd.timer.performAfterDelay(50, function()
             vars.status = "hit"
             if vars.in_progress then
@@ -212,6 +229,7 @@ end
 function play:miss()
     if vars.in_progress then
         vars.misses += 1
+        save.misses += 1
         vars.status = "just_missed"
         vars.anim_person = pd.timer.new(1, 9, 9.9)
         pd.timer.performAfterDelay(40, function()
@@ -240,7 +258,7 @@ function play:win()
         vars.score += 1
         pd.timer.performAfterDelay(5000, function()
             fademusic()
-            scenemanager:transitionscene(rehearsal, vars.score)
+            scenemanager:transitionscene(rehearsal, vars.score, vars.button_string)
         end)
     end
 end
@@ -257,7 +275,7 @@ function play:lose()
             assets.cane:play()
             vars.anim_cane = pd.timer.new(850, -158, -1, pd.easingFunctions.outSine)
         end)
-        pd.timer.performAfterDelay(1850, function()
+        pd.timer.performAfterDelay(1900, function()
             vars.anim_cane = pd.timer.new(250, -1, -158)
         end)
         pd.timer.performAfterDelay(2000, function()

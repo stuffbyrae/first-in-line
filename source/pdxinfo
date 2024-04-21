@@ -1,7 +1,7 @@
-name=firstinline
+name=First in…Line?
 author=rae
 description=It's opening night, and our lead star dropped out! Can you memorize these lines REALLY quickly? Made for PlayJam 5.
 bundleID=wtf.rae.firstinline
-version=1.0.0
-buildNumber=333
+version=1.1.0
+buildNumber=433
 imagePath=images/system

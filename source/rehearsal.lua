@@ -11,10 +11,14 @@ class('rehearsal').extends(gfx.sprite) -- Create the scene's class
 function rehearsal:init(...)
     rehearsal.super.init(self)
     local args = {...} -- Arguments passed in through the scene management will arrive here
+    gfx.sprite.setAlwaysRedraw(false)
     
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
+        menu:addMenuItem('return to title', function()
+            scenemanager:switchscene(title)
+        end)
     end
     
     assets = { -- All assets go here. Images, sounds, fonts, etc.
@@ -29,8 +33,8 @@ function rehearsal:init(...)
         score = args[1],
         buttons = {pd.kButtonUp, pd.kButtonDown, pd.kButtonLeft, pd.kButtonRight, pd.kButtonA, pd.kButtonB},
         button_texts = {'U', 'D', 'L', 'R', 'A', 'B'},
-        button_string = {},
         button_text_string = '(',
+        button_text_string_length = 0,
         anim_lines = pd.timer.new(0, 475, 475),
         anim_lines_frames = pd.timer.new(0, 1, 1),
         paper_rand = math.random(1, 2),
@@ -46,17 +50,58 @@ function rehearsal:init(...)
     vars.anim_lines.discardOnCompletion = false
     vars.anim_lines_frames.discardOnCompletion = false
 
-    vars.string_length = math.min(4 + vars.score, 24)
+    if easy then
+        vars.button_string = args[2]
+        if vars.button_string[1] == nil then
+            vars.string_length = 4
+        else
+            vars.string_length = 1
+        end
+        if #vars.button_string + 1 > 24 then
+            vars.button_string = {}
+            vars.string_length = 4
+        end
+    else
+        vars.string_length = math.min(4 + vars.score, 24)
+        vars.button_string = {}
+        print('fuck')
+    end
+
+    for i = 1, #vars.button_string do
+        if vars.button_string[i] == 1 then
+            -- Left is 1
+            vars.button_text_string = vars.button_text_string .. 'L, '
+        elseif vars.button_string[i] == 2 then
+            -- Right is 2
+            vars.button_text_string = vars.button_text_string .. 'R, '
+        elseif vars.button_string[i] == 4 then
+            -- Up is 4
+            vars.button_text_string = vars.button_text_string .. 'U, '
+        elseif vars.button_string[i] == 8 then
+            -- Down is 8
+            vars.button_text_string = vars.button_text_string .. 'D, '
+        elseif vars.button_string[i] == 16 then
+            -- B is 16
+            vars.button_text_string = vars.button_text_string .. 'B, '
+        elseif vars.button_string[i] == 32 then
+            -- A is 32
+            vars.button_text_string = vars.button_text_string .. 'A, '
+        end
+        vars.button_text_string_length += 1
+        if vars.button_text_string_length % 5 == 0 and vars.button_text_string_length ~= 0 then vars.button_text_string = vars.button_text_string .. '\n' end
+    end
+    
     for i = 1, vars.string_length do
         vars.rand = math.random(1, 6)
         table.insert(vars.button_string, vars.buttons[vars.rand])
-        if i % 5 == 0 and i ~= 0 then vars.button_text_string = vars.button_text_string .. '\n' end
         vars.button_text_string = vars.button_text_string .. vars.button_texts[vars.rand]
         if i ~= vars.string_length then
             vars.button_text_string = vars.button_text_string .. ', '
         else
             vars.button_text_string = vars.button_text_string .. ')'
         end
+        vars.button_text_string_length += 1
+        if vars.button_text_string_length % 5 == 0 and vars.button_text_string_length ~= 0 then vars.button_text_string = vars.button_text_string .. '\n' end
     end
 
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
@@ -72,7 +117,7 @@ function rehearsal:init(...)
     end
     function rehearsal_lines:draw()
         assets.lines[math.floor(vars.anim_lines_frames.value)]:draw(0, 0)
-        assets.buttony:drawTextAligned(vars.button_text_string, 172, 95 + (vars.anim_lines_frames.value * -20), kTextAlignment.center)
+        assets.buttony:drawTextAligned(vars.button_text_string, 175, 95 + (vars.anim_lines_frames.value * -20), kTextAlignment.center)
     end
     function rehearsal_lines:update()
         if vars.anim_lines ~= nil then
