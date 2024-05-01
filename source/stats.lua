@@ -33,10 +33,15 @@ function stats:init(...)
         showtime = false,
     }
     vars.statsHandlers = {
+        AButtonDown = function()
+            scenemanager:switchscene(title)
+            assets.click:play()
+        end,
+
         BButtonDown = function()
             scenemanager:switchscene(title)
             assets.click:play()
-        end
+        end,
     }
 
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
@@ -44,18 +49,20 @@ function stats:init(...)
             assets.image_bg:draw(0, 0)
         end
         assets.sasser:drawTextAligned('Stats', 200, 10, kTextAlignment.center)
-        assets.small:drawTextAligned('high score (easy):      ' .. save.score_easy, 200, 30, kTextAlignment.center)
-        assets.small:drawTextAligned('high score (hard):      ' .. save.score_hard, 200, 45, kTextAlignment.center)
-        assets.small:drawTextAligned('total plays:             ' .. save.plays, 200, 60, kTextAlignment.center)
-        assets.small:drawTextAligned('total misses:             ' .. save.misses, 200, 75, kTextAlignment.center)
-        assets.sasser:drawTextAligned('Credits', 200, 100, kTextAlignment.center)
-        assets.small:drawTextAligned('music - kevin macleod', 200, 120, kTextAlignment.center)
-        assets.small:drawTextAligned('sfx - pixabay.com', 200, 135, kTextAlignment.center)
-        assets.small:drawTextAligned('tanuk code lib - toad & schyzo', 200, 150, kTextAlignment.center)
-        assets.small:drawTextAligned('thanx - voxy, mag, toad', 200, 165, kTextAlignment.center)
-        assets.small:drawTextAligned('2024, made by rae', 200, 200, kTextAlignment.center)
-        assets.small:drawTextAligned('for playjam 5', 200, 215, kTextAlignment.center)
-        assets.small:drawText('B back', 30, 215)
+        if save.hard then
+            assets.small:drawTextAligned('high scores:\neasy: ' .. save.score_easy .. '      hard: ' .. save.score_hard, 200, 30, kTextAlignment.center)
+            assets.small:drawTextAligned('plays: ' .. save.plays .. '      hints: ' .. save.hints .. '\nheckles: ' .. save.heckles, 200, 75, kTextAlignment.center)
+        else
+            assets.small:drawTextAligned('high score: ' .. save.score_easy, 200, 45, kTextAlignment.center)
+            assets.small:drawTextAligned('plays: ' .. save.plays .. '      hints: ' .. save.hints, 200, 70, kTextAlignment.center)
+        end
+        assets.sasser:drawTextAligned('Credits', 200, 120, kTextAlignment.center)
+        assets.small:drawTextAligned('music - kevin macleod', 200, 140, kTextAlignment.center)
+        assets.small:drawTextAligned('sfx - pixabay.com & rae', 200, 155, kTextAlignment.center)
+        assets.small:drawTextAligned('tanuk code lib - toad & schyzo', 200, 170, kTextAlignment.center)
+        assets.small:drawTextAligned('thanx - paul, voxy, mag, & toad', 200, 185, kTextAlignment.center)
+        assets.small:drawTextAligned('2024, made by rae', 370, 215, kTextAlignment.right)
+        assets.small:drawText('A/B - back', 30, 215)
     end)
 
     pd.timer.performAfterDelay(500, function()

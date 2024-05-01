@@ -1,4 +1,5 @@
 import 'stats'
+import 'scores'
 import 'rehearsal'
 
 -- Setting up consts
@@ -48,13 +49,17 @@ function title:init(...)
         end,
 
         upButtonDown = function()
-            vars.easy = not vars.easy
-            gfx.sprite.redrawBackground()
+            if save.hard then
+                vars.easy = not vars.easy
+                gfx.sprite.redrawBackground()
+            end
         end,
 
         downButtonDown = function()
-            vars.easy = not vars.easy
-            gfx.sprite.redrawBackground()
+            if save.hard then
+                vars.easy = not vars.easy
+                gfx.sprite.redrawBackground()
+            end
         end,
     }
     
@@ -62,16 +67,20 @@ function title:init(...)
         if vars.showtime then
             assets.image_title:draw(0, 0)
         end
-        gfx.setLineWidth(2)
-        gfx.drawRect(192, 169, 77, 20)
-        gfx.fillPolygon(geo.polygon.new(201, 171, 206, 178, 196, 178, 201, 171))
-        gfx.fillPolygon(geo.polygon.new(206, 179, 196, 179, 201, 186, 206, 179))
-        if vars.easy then
-            assets.small:drawTextAligned('easy', 235, 170, kTextAlignment.center)
+        if not save.hard then
+            assets.small:drawText('A play easy game', 120, 170)
         else
-            assets.small:drawTextAligned('hard', 235, 170, kTextAlignment.center)
+            assets.small:drawText('A play               game', 120, 170)
+            gfx.setLineWidth(2)
+            gfx.drawRect(192, 169, 77, 20)
+            gfx.fillPolygon(geo.polygon.new(201, 171, 206, 178, 196, 178, 201, 171))
+            gfx.fillPolygon(geo.polygon.new(206, 179, 196, 179, 201, 186, 206, 179))
+            if vars.easy then
+                assets.small:drawTextAligned('easy', 235, 170, kTextAlignment.center)
+            else
+                assets.small:drawTextAligned('hard', 235, 170, kTextAlignment.center)
+            end
         end
-        assets.small:drawText('@ play               game', 120, 170)
         assets.small:drawText('B stats n\' credits', 160, 190)
         assets.small:drawTextAligned('v' .. pd.metadata.version, 370, 220, kTextAlignment.right)
     end)

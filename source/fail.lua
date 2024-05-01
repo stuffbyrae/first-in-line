@@ -32,10 +32,16 @@ function fail:init(...)
     vars = { -- All variables go here. Args passed in from earlier, scene variables, etc.
         score = args[1],
         showtime = false,
-        image = math.random(1, 4)
+        image = math.random(1, 4),
+        draw = 'high'
     }
     vars.failHandlers = {
         AButtonDown = function()
+            scenemanager:switchscene(title)
+            assets.click:play()
+        end,
+
+        BButtonDown = function()
             scenemanager:switchscene(title)
             assets.click:play()
         end,
@@ -43,10 +49,27 @@ function fail:init(...)
 
     save.plays += 1
 
-    if vars.score >= 5 then
+    if vars.score >= 25 then
         assets.image_fail = gfx.image.new('images/fail_good_' .. vars.image)
     else
         assets.image_fail = gfx.image.new('images/fail_bad_' .. vars.image)
+    end
+
+    if easy then
+        if vars.score > save.score_easy and vars.score > 0 then
+            if vars.score >= 10 and not save.hard then
+                vars.draw = 'hard'
+                save.hard = true
+            else
+                vars.draw = 'new'
+            end
+            save.score_easy = vars.score
+        end
+    else
+        if vars.score > save.score_hard and vars.score > 0 then
+            vars.draw = 'new'
+            save.score_hard = vars.score
+        end
     end
     
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
@@ -55,22 +78,18 @@ function fail:init(...)
         end
         assets.sasser:drawTextAligned('Game Over', 200, 10, kTextAlignment.center)
         assets.small:drawTextAligned('your score: ' .. vars.score, 200, 30, kTextAlignment.center)
-        if easy then
-            if vars.score >= save.score_easy and vars.score > 0 then
-                assets.small:drawTextAligned('(a new high!)', 200, 50, kTextAlignment.center)
-                save.score_easy = vars.score
+        if vars.draw == 'hard' then
+            assets.small:drawTextAligned('(hard mode unlocked!)', 200, 50, kTextAlignment.center)
+        elseif vars.draw == 'new' then
+            assets.small:drawTextAligned('(a new high!)', 200, 50, kTextAlignment.center)
+        elseif vars.draw == 'high' then
+            if easy then
+                assets.small:drawTextAligned('high score: ' .. save.score_easy, 200, 50, kTextAlignment.center)
             else
-                assets.small:drawTextAligned('high score: ' .. save.score, 200, 50, kTextAlignment.center)
-            end
-        else
-            if vars.score >= save.score_hard and vars.score > 0 then
-                assets.small:drawTextAligned('(a new high!)', 200, 50, kTextAlignment.center)
-                save.score_hard = vars.score
-            else
-                assets.small:drawTextAligned('high score: ' .. save.score, 200, 50, kTextAlignment.center)
+                assets.small:drawTextAligned('high score: ' .. save.score_hard, 200, 50, kTextAlignment.center)
             end
         end
-        assets.small:drawTextAligned('@ return to title', 200, 210, kTextAlignment.center)
+        assets.small:drawTextAligned('A/B - return to title', 200, 210, kTextAlignment.center)
     end)
     
     pd.timer.performAfterDelay(1200, function()

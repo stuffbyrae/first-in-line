@@ -2,8 +2,7 @@ local pd <const> = playdate
 local gfx <const> = pd.graphics
 local smp <const> = pd.sound.sampleplayer
 
-local image_curtain_left = gfx.image.new('images/curtain_left')
-local image_curtain_right = gfx.image.new('images/curtain_right')
+local curtains = gfx.imagetable.new('images/curtains')
 local curtain1 = smp.new('audio/sfx/curtain1')
 local curtain2 = smp.new('audio/sfx/curtain2')
 local curtain3 = smp.new('audio/sfx/curtain3')
@@ -25,6 +24,7 @@ function scenemanager:switchscene(scene, ...)
         pd.inputHandlers.pop()
     end
     self:loadnewscene()
+    self.transitioning = false
 end
 
 function scenemanager:transitionscene(scene, ...)
@@ -37,23 +37,19 @@ function scenemanager:transitionscene(scene, ...)
     self.transitioning = true
     self.newscene = scene
     self.sceneargs = {...}
-    local transitiontimer = self:transition(-230, 0, 400, 170, pd.easingFunctions.outSine)
+    local transitiontimer = self:transition(1, 13)
     transitiontimer.timerEndedCallback = function()
         self:loadnewscene()
-        transitiontimer = self:transition(0, -230, 170, 400, pd.easingFunctions.inSine)
+        transitiontimer = self:transition(14, 24)
         transitiontimer.timerEndedCallback = function()
             self.transitioning = false
-            self.sprite_curtain_left:remove()
-            self.sprite_curtain_right:remove()
+            self.sprite_curtains:remove()
         end
     end
 end
 
-function scenemanager:transition(curtain_left_start, curtain_left_end, curtain_right_start, curtain_right_end, ease)
-    self.sprite_curtain_left = self:curtain_left()
-    self.sprite_curtain_right = self:curtain_right()
-    self.sprite_curtain_left:moveTo(curtain_left_start, 0)
-    self.sprite_curtain_right:moveTo(curtain_right_start, 0)
+function scenemanager:transition(curtains_start, curtains_end)
+    self.sprite_curtains = self:curtains()
     local sfx_rand = math.random(1, 4)
     if sfx_rand == 1 then
         curtain1:play()
@@ -64,26 +60,19 @@ function scenemanager:transition(curtain_left_start, curtain_left_end, curtain_r
     elseif sfx_rand == 4 then
         curtain4:play()
     end
-    local curtain_left_timer = pd.timer.new(self.transitiontime, curtain_left_start, curtain_left_end, ease)
-    local curtain_right_timer = pd.timer.new(self.transitiontime, curtain_right_start, curtain_right_end, ease)
-    curtain_left_timer.updateCallback = function(timer) self.sprite_curtain_left:moveTo(math.floor(timer.value / 2) * 2, 0) end
-    curtain_right_timer.updateCallback = function(timer) self.sprite_curtain_right:moveTo(math.floor(timer.value / 2) * 2, 0) end
-    return curtain_left_timer
+    local curtains_timer = pd.timer.new(self.transitiontime, curtains_start, curtains_end)
+    curtains_timer.updateCallback = function(timer) self.sprite_curtains:setImage(curtains[math.floor(timer.value)]) end
+    return curtains_timer
 end
 
-function scenemanager:curtain_left()
-    local loading = gfx.sprite.new(image_curtain_left)
+function scenemanager:curtains()
+    local loading = gfx.sprite.new()
+    if self.sprite_curtains then
+        loading:setImage(self.sprite_curtains:getImage())
+    else
+        loading:setImage(curtains[1])
+    end
     loading:setZIndex(26000)
-    loading:moveTo(0, 0)
-    loading:setCenter(0, 0)
-    loading:setIgnoresDrawOffset(true)
-    loading:add()
-    return loading
-end
-
-function scenemanager:curtain_right()
-    local loading = gfx.sprite.new(image_curtain_right)
-    loading:setZIndex(25999)
     loading:moveTo(0, 0)
     loading:setCenter(0, 0)
     loading:setIgnoresDrawOffset(true)

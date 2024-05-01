@@ -17,16 +17,29 @@ function rehearsal:init(...)
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
         menu:addMenuItem('return to title', function()
-            scenemanager:switchscene(title)
+            backtotitle(function()
+                if vars.showtime_timer ~= nil then
+                    vars.showtime_timer:start()
+                    assets.timer:setPaused(false)
+                end
+            end)
+            if vars.showtime_timer ~= nil then
+                vars.showtime_timer:pause()
+                assets.timer:setPaused(true)
+            end
         end)
     end
     
     assets = { -- All assets go here. Images, sounds, fonts, etc.
         buttony = gfx.font.new('fonts/buttony'),
         lines = gfx.imagetable.new('images/lines'),
+        roobert = gfx.font.new('fonts/roobert'),
         small = gfx.font.new('fonts/small'),
         paper1 = smp.new('audio/sfx/paper1'),
         paper2 = smp.new('audio/sfx/paper2'),
+        image_timer = gfx.image.new('images/timer'),
+        timer = smp.new('audio/sfx/timer'),
+        ding = smp.new('audio/sfx/ding'),
     }
     
     vars = { -- All variables go here. Args passed in from earlier, scene variables, etc.
@@ -49,6 +62,13 @@ function rehearsal:init(...)
 
     vars.anim_lines.discardOnCompletion = false
     vars.anim_lines_frames.discardOnCompletion = false
+    if not easy then
+        vars.showtime_timer = pd.timer.new(math.min(10000 + math.ceil(vars.score / 10), 30000), function() self:time() end)
+        vars.showtime_timer.delay = 2500
+        pd.timer.performAfterDelay(2000, function()
+            assets.timer:play()
+        end)
+    end
 
     if easy then
         vars.button_string = args[2]
@@ -64,7 +84,6 @@ function rehearsal:init(...)
     else
         vars.string_length = math.min(4 + vars.score, 24)
         vars.button_string = {}
-        print('fuck')
     end
 
     for i = 1, #vars.button_string do
@@ -128,27 +147,35 @@ function rehearsal:init(...)
     class('rehearsal_showtime').extends(gfx.sprite)
     function rehearsal_showtime:init()
         rehearsal_showtime.super.init(self)
-        self:setSize(150, 30)
-        self:moveTo(315, 215)
+        self:setSize(400, 240)
+        self:moveTo(200, 120)
+        self:add()
+    end
+    function rehearsal_showtime:update()
+        self:markDirty()
     end
     function rehearsal_showtime:draw()
-        gfx.setColor(gfx.kColorWhite)
-        gfx.fillRect(0, 0, 150, 30)
-        gfx.setColor(gfx.kColorBlack)
-        gfx.setLineWidth(2)
-        gfx.drawRect(3, 3, 144, 24)
-        assets.small:drawTextAligned('@ showtime!', 75, 7, kTextAlignment.center)
+        if not easy then
+            assets.image_timer:draw(10, 10)
+            assets.roobert:drawTextAligned(math.floor(vars.showtime_timer.timeLeft / 1000), 40, 36, kTextAlignment.center)
+        end
+        if vars.showtime then
+            gfx.setColor(gfx.kColorWhite)
+            gfx.fillRect(245, 205, 150, 30)
+            gfx.setColor(gfx.kColorBlack)
+            gfx.drawRect(248, 208, 144, 24)
+            assets.small:drawTextAligned('A showtime!', 320, 212, kTextAlignment.center)
+        end
     end
 
     pd.timer.performAfterDelay(1000, function()
         assets.paper2:play()
-        vars.anim_lines:resetnew(400, 475, 240, pd.easingFunctions.outCubic)
-        vars.anim_lines_frames:resetnew(300, 1, 3)
+        vars.anim_lines:resetnew(500, 475, 240, pd.easingFunctions.outCubic)
+        vars.anim_lines_frames:resetnew(400, 1, 3)
     end)
 
     pd.timer.performAfterDelay(2500, function()
         vars.showtime = true
-        self.showtime:add()
     end)
 
     -- Set the sprites
@@ -157,12 +184,21 @@ function rehearsal:init(...)
     self:add()
 end
 
+function rehearsal:time()
+    assets.timer:stop()
+    assets.ding:play()
+    self:leave()
+end
+
 function rehearsal:leave()
     if vars.showtime then
+        if assets.timer:isPlaying() then
+            assets.timer:stop()
+            assets.ding:play()
+        end
         vars.showtime = false
         self.showtime:remove()
         vars.anim_lines:resetnew(200, 240, 475, pd.easingFunctions.inSine)
-        vars.anim_lines_frames:resetnew(0, 2, 2)
         assets.paper1:play()
         pd.timer.performAfterDelay(500, function()
             scenemanager:transitionscene(play, vars.score, vars.button_string)

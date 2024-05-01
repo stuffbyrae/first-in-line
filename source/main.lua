@@ -16,6 +16,7 @@ local smp <const> = pd.sound.sampleplayer
 local fle <const> = pd.sound.fileplayer
 
 pd.display.setRefreshRate(30)
+gfx.setLineWidth(2)
 gfx.setBackgroundColor(gfx.kColorBlack)
 pd.setMenuImage(gfx.image.new('images/pause'))
 
@@ -26,6 +27,10 @@ function savecheck()
     if save == nil then save = {} end
     save.score_easy = save.score_easy or 0
     save.score_hard = save.score_hard or save.score or 0
+    save.score = nil
+    save.hints = save.hints or 0
+    save.heckles = save.heckles or 0
+    if save.hard == nil then save.hard = false end
     save.plays = save.plays or 0
     save.misses = save.misses or 0
 end
@@ -33,9 +38,27 @@ end
 -- ... now we run that!
 savecheck()
 
+-- Legacy check
+if save.score_easy >= 25 then
+    save.hard = true
+end
+
 -- When the game closes...
 function pd.gameWillTerminate()
     pd.datastore.write(save)
+    if pd.isSimulator ~= 1 then
+        local img = gfx.getDisplayImage()
+        local sound = smp.new('audio/sfx/launch')
+        sound:play()
+        local byebye = gfx.imagetable.new('images/byebye')
+        local byebyeanim = gfx.animator.new(2200, 1, #byebye)
+        gfx.setDrawOffset(0, 0)
+        while not byebyeanim:ended() do
+            img:draw(0, 0)
+            byebye:drawImage(math.floor(byebyeanim:currentValue()), 0, 0)
+            pd.display.flush()
+        end
+    end
 end
 
 function pd.deviceWillSleep()
@@ -83,11 +106,63 @@ function pd.timer:resetnew(duration, startValue, endValue, easingFunction)
 	self.hasReversed = false
     self.reverses = false
     self.repeats = false
-    self.discardOnCompletion = false
 	self.remainingDelay = self.delay
 	self.value = self._startValue
 	self._calledOnRepeat = nil
-    self:start()
+    self.discardOnCompletion = false
+    self.paused = false
+end
+
+function backtotitle(acallback, bcallback)
+    local image = gfx.image.new(400, 240)
+    local sasser = gfx.font.new('fonts/sasser')
+    local small = gfx.font.new('fonts/small')
+    local click = smp.new('audio/sfx/click')
+    gfx.pushContext(image)
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(10, 10, 380, 220)
+        gfx.setColor(gfx.kColorBlack)
+        gfx.drawRect(13, 13, 374, 214)
+        sasser:drawTextAligned('Are you sure you wanna quit?', 200, 25, kTextAlignment.center)
+        small:drawTextAligned('if you quit now, all the progress in\nthis game will be lost. your\nscore won\'t be saved, and you can\'t\ncome back later. are you sure?', 200, 80, kTextAlignment.center)
+        small:drawTextAligned('B - quit to title   A - keep playing', 200, 200, kTextAlignment.center)
+    gfx.popContext(image)
+    local sprite = gfx.sprite.new(image)
+    sprite:setCenter(0, 0)
+    sprite:moveTo(0, 0)
+    sprite:setZIndex(999)
+    sprite:setIgnoresDrawOffset(true)
+    sprite:add()
+    local backHandlers = {
+        AButtonDown = function()
+            pd.inputHandlers.pop()
+            sprite:remove()
+            click:play()
+            click = nil
+            sprite = nil
+            backHandlers = nil
+            if acallback ~= nil then
+                acallback()
+            end
+        end,
+        
+        BButtonDown = function()
+            pd.inputHandlers.pop()
+            sprite:remove()
+            click:play()
+            click = nil
+            sprite = nil
+            backHandlers = nil
+            scenemanager:transitionscene(title)
+            if bcallback ~= nil then
+                bcallback()
+            end
+        end,
+    }
+    pd.inputHandlers.push(backHandlers, true)
+    image = nil
+    sasser = nil
+    small = nil
 end
 
 -- This function shakes the screen. int is a number representing intensity. time is a number representing duration
