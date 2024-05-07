@@ -14,19 +14,25 @@ function title:init(...)
     title.super.init(self)
     local args = {...} -- Arguments passed in through the scene management will arrive here
     gfx.sprite.setAlwaysRedraw(false)
-    
+
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
+        if catalog then
+            menu:addMenuItem('global scores', function()
+                assets.click:play()
+                scenemanager:switchscene(scores)
+            end)
+        end
     end
-    
+
     assets = { -- All assets go here. Images, sounds, fonts, etc.
         image_title = gfx.image.new('images/title'),
         small = gfx.font.new('fonts/small'),
         spotlight = smp.new('audio/sfx/spotlight'),
         click = smp.new('audio/sfx/click'),
     }
-    
+
     vars = { -- All variables go here. Args passed in from earlier, scene variables, etc.
         showtime = false,
         easy = true,
@@ -62,7 +68,7 @@ function title:init(...)
             end
         end,
     }
-    
+
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
         if vars.showtime then
             assets.image_title:draw(0, 0)
@@ -84,7 +90,7 @@ function title:init(...)
         assets.small:drawText('B stats n\' credits', 160, 190)
         assets.small:drawTextAligned('v' .. pd.metadata.version, 370, 220, kTextAlignment.right)
     end)
-    
+
     pd.timer.performAfterDelay(500, function()
         vars.showtime = true
         pd.inputHandlers.push(vars.titleHandlers)

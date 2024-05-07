@@ -3,6 +3,6 @@ author=rae
 description=It's opening night, and our lead star dropped out! Can you memorize these lines REALLY quickly? Made for PlayJam 5.
 bundleID=wtf.rae.firstinline
 version=1.2.1c
-buildNumber=703
+buildNumber=702
 imagePath=images/system
 launchSoundPath=audio/sfx/launch

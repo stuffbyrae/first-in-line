@@ -12,7 +12,7 @@ function fail:init(...)
     fail.super.init(self)
     local args = {...} -- Arguments passed in through the scene management will arrive here
     gfx.sprite.setAlwaysRedraw(false)
-    
+
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
@@ -21,14 +21,14 @@ function fail:init(...)
             scenemanager:switchscene(title)
         end)
     end
-    
+
     assets = { -- All assets go here. Images, sounds, fonts, etc.
         sasser = gfx.font.new('fonts/sasser'),
         small = gfx.font.new('fonts/small'),
         spotlight = smp.new('audio/sfx/spotlight'),
         click = smp.new('audio/sfx/click'),
     }
-    
+
     vars = { -- All variables go here. Args passed in from earlier, scene variables, etc.
         score = args[1],
         showtime = false,
@@ -64,14 +64,20 @@ function fail:init(...)
                 vars.draw = 'new'
             end
             save.score_easy = vars.score
+            if catalog then
+                pd.scoreboards.addScore('easy', vars.score)
+            end
         end
     else
         if vars.score > save.score_hard and vars.score > 0 then
             vars.draw = 'new'
             save.score_hard = vars.score
+            if catalog then
+                pd.scoreboards.addScore('hard', vars.score)
+            end
         end
     end
-    
+
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
         if vars.showtime then
             assets.image_fail:draw(0, 0)
@@ -91,7 +97,7 @@ function fail:init(...)
         end
         assets.small:drawTextAligned('A/B - return to title', 200, 210, kTextAlignment.center)
     end)
-    
+
     pd.timer.performAfterDelay(1200, function()
         vars.showtime = true
         pd.inputHandlers.push(vars.failHandlers)

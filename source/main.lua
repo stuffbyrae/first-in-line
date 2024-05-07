@@ -20,6 +20,7 @@ gfx.setLineWidth(2)
 gfx.setBackgroundColor(gfx.kColorBlack)
 pd.setMenuImage(gfx.image.new('images/pause'))
 
+catalog = true
 easy = true
 -- Save check
 function savecheck()
@@ -40,6 +41,11 @@ savecheck()
 
 -- Legacy check
 if save.score_easy >= 25 then
+    save.hard = true
+end
+
+function pd.keyPressed(q)
+    print('C-C-C-COMBO BREAKER!! Hard mode unlocked!!')
     save.hard = true
 end
 
@@ -113,6 +119,21 @@ function pd.timer:resetnew(duration, startValue, endValue, easingFunction)
     self.paused = false
 end
 
+-- This function returns the inputted number, with the ordinal suffix tacked on at the end (as a string)
+function ordinal(num)
+    local m10 = num % 10 -- This is the number, modulo'd by 10.
+    local m100 = num % 100 -- This is the number, modulo'd by 100.
+    if m10 == 1 and m100 ~= 11 then -- If the number ends in 1 but NOT 11...
+        return tostring(num) .. gfx.getLocalizedText("st") -- add "st" on.
+    elseif m10 == 2 and m100 ~= 12 then -- If the number ends in 2 but NOT 12...
+        return tostring(num) .. gfx.getLocalizedText("nd") -- add "nd" on,
+    elseif m10 == 3 and m100 ~= 13 then -- and if the number ends in 3 but NOT 13...
+        return tostring(num) .. gfx.getLocalizedText("rd") -- add "rd" on.
+    else -- If all those checks passed us by,
+        return tostring(num) .. gfx.getLocalizedText("th") -- then it ends in "th".
+    end
+end
+
 function backtotitle(acallback, bcallback)
     local image = gfx.image.new(400, 240)
     local sasser = gfx.font.new('fonts/sasser')
@@ -145,7 +166,7 @@ function backtotitle(acallback, bcallback)
                 acallback()
             end
         end,
-        
+
         BButtonDown = function()
             pd.inputHandlers.pop()
             sprite:remove()
