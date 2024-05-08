@@ -44,11 +44,6 @@ if save.score_easy >= 25 then
     save.hard = true
 end
 
-function pd.keyPressed(q)
-    print('C-C-C-COMBO BREAKER!! Hard mode unlocked!!')
-    save.hard = true
-end
-
 -- When the game closes...
 function pd.gameWillTerminate()
     pd.datastore.write(save)
