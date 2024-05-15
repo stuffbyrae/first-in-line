@@ -1,0 +1,86 @@
+-- Title screen
+"arcade" = "Arcade Mode"
+"arcadedesc" = "the classic stageplay"
+"oneshot" = "One-Shot Mode"
+"oneshotdesc" = "one miss, and you're out"
+"multi" = "Multi Mode"
+"multidesc" = "pass and \"play\", for 2"
+"highscores" = "High Scores"
+"highscoresdesc" = "view global high scores"
+"settings" = "Settings"
+"settingsdesc" = "change game settings"
+"playgame" = "A play"
+"playgamehard" = "B hard - A easy"
+"select" = "A select"
+
+-- Return to title
+"returnhead" = "Are you sure you wanna quit?"
+"returntext" = "if you quit now, all the progress in\nthis game will be lost. your\nscore won\'t be saved, and you can\'t\ncome back later. are you sure?"
+"returnprompts" = "B keep playing - A quit to title"
+
+-- gameplay
+"p1" = "player 1, your turn!"
+"p2" = "player 2, your turn!"
+"showtime" = "A showtime!"
+"dock" = "please dock the crank to continue."
+
+-- Game over
+"gameover" = "Game Over"
+"yourscore" = "your score: "
+"highscore" = "high score: "
+"newhigh" = "(that's a new high!)"
+"oneshotunlocked" = "(one-shot mode unlocked!)"
+"hardunlocked" = "(hard difficulty unlocked!)"
+"gameoverprompts" = "B quit to title - A play again"
+"p1wins" = "Player 1 wins!!"
+"p2wins" = "Player 2 wins!!"
+
+-- High scores
+"globalscores" = "global scores"
+"easyscores" = "easy scores"
+"hardscores" = "hard scores"
+"loadingglobalscores" = "loading global scores..."
+"failedglobalscores" = "failed to get scores."
+"emptyglobalscores" = "this board is empty!"
+"yourank" = "You rank... "
+"geteasyscores" = "B back - A get easy scores"
+"gethardscores" = "B back - A get hard scores"
+
+-- Settings
+"true" = "Y"
+"false" = "N"
+
+"music" = "music"
+"sfx" = "sfx"
+
+"crank" = "crank"
+"shaking" = "shaking"
+"mic" = "microphone"
+
+"viewcredits" = "view credits"
+
+-- Credits
+"credits" = "Credits"
+"creditsartcode" = "art n' code - rae"
+"creditsmusic" = "music - kevin macleod"
+"creditssfx" = "sfx - pixabay.com & rae"
+"creditstanuk" = "tanuk lib - toad & schyzo"
+"creditsshaker" = "shaker lib - dustin & dave"
+"creditsfont" = "sasser slab - neven mrgan"
+"creditsthanx" = "thanx - paul, voxy, mag,"
+"creditsthanx2" = "toad, axo, 3d"
+"creditsrae" = "2024, made by rae"
+"creditsyou" = "thanks for playing!"
+
+-- Misc.
+"quittotitle" = "B quit to title"
+"back" = "B back"
+"toggle" = "A toggle"
+"separator" = " - "
+"colon" = ": "
+"easy" = "easy"
+"hard" = "hard"
+"high" = "high"
+"slidetitle" = "back to title"
+"slidesettings" = "to settings"
+"slideagain" = "play again"

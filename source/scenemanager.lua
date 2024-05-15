@@ -11,7 +11,7 @@ local curtain4 = smp.new('audio/sfx/curtain4')
 class('scenemanager').extends()
 
 function scenemanager:init()
-    self.transitiontime = 750
+    self.transitiontime = 700
     self.transitioning = false
 end
 
@@ -51,14 +51,16 @@ end
 function scenemanager:transition(curtains_start, curtains_end)
     self.sprite_curtains = self:curtains()
     local sfx_rand = math.random(1, 4)
-    if sfx_rand == 1 then
-        curtain1:play()
-    elseif sfx_rand == 2 then
-        curtain2:play()
-    elseif sfx_rand == 3 then
-        curtain3:play()
-    elseif sfx_rand == 4 then
-        curtain4:play()
+    if save.sfx then
+        if sfx_rand == 1 then
+            curtain1:play()
+        elseif sfx_rand == 2 then
+            curtain2:play()
+        elseif sfx_rand == 3 then
+            curtain3:play()
+        elseif sfx_rand == 4 then
+            curtain4:play()
+        end
     end
     local curtains_timer = pd.timer.new(self.transitiontime, curtains_start, curtains_end)
     curtains_timer.updateCallback = function(timer) self.sprite_curtains:setImage(curtains[math.floor(timer.value)]) end

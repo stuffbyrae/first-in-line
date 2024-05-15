@@ -14,35 +14,47 @@ local pd <const> = playdate
 local gfx <const> = pd.graphics
 local smp <const> = pd.sound.sampleplayer
 local fle <const> = pd.sound.fileplayer
+local text <const> = gfx.getLocalizedText
 
 pd.display.setRefreshRate(30)
+pd.setCrankSoundsDisabled(true)
 gfx.setLineWidth(2)
 gfx.setBackgroundColor(gfx.kColorBlack)
 pd.setMenuImage(gfx.image.new('images/pause'))
 
-catalog = true
+mode = "arcade"
+p1 = true
 easy = true
+
+catalog = false
+if pd.metadata.bundleID == "wtf.rae.firstinline" then
+    catalog = true
+end
+
 -- Save check
 function savecheck()
     save = pd.datastore.read()
     if save == nil then save = {} end
-    save.score_easy = save.score_easy or 0
-    save.score_hard = save.score_hard or save.score or 0
-    save.score = nil
+    if save.hard == nil then save.hard = false end
+    if save.music == nil then save.music = true end
+    if save.sfx == nil then save.sfx = true end
+    if save.crank == nil then save.crank = true end
+    if save.shaking == nil then save.shaking = false end
+    if save.mic == nil then save.mic = false end
+    save.score_arcade_easy = save.score_arcade_easy or 0
+    save.score_arcade_hard = save.score_arcade_hard or 0
+    save.score_oneshot_easy = save.score_oneshot_easy or 0
+    save.score_oneshot_hard = save.score_oneshot_hard or 0
+    save.arcade_plays = save.arcade_plays or 0
+    save.oneshot_plays = save.oneshot_plays or 0
+    save.multi_plays = save.multi_plays or 0
+    save.misses = save.misses or 0
     save.hints = save.hints or 0
     save.heckles = save.heckles or 0
-    if save.hard == nil then save.hard = false end
-    save.plays = save.plays or 0
-    save.misses = save.misses or 0
 end
 
 -- ... now we run that!
 savecheck()
-
--- Legacy check
-if save.score_easy >= 25 then
-    save.hard = true
-end
 
 -- When the game closes...
 function pd.gameWillTerminate()
@@ -50,7 +62,7 @@ function pd.gameWillTerminate()
     if pd.isSimulator ~= 1 then
         local img = gfx.getDisplayImage()
         local sound = smp.new('audio/sfx/launch')
-        sound:play()
+        if save.sfx then sound:play() end
         local byebye = gfx.imagetable.new('images/byebye')
         local byebyeanim = gfx.animator.new(2200, 1, #byebye)
         gfx.setDrawOffset(0, 0)
@@ -82,7 +94,7 @@ end
 
 -- New music track. This should be called in a scene's init, only if there's no track leading into it. File is a path to an audio file in the PDX. Loop, if true, will loop the audio file. Range will set the loop's starting range.
 function newmusic(file, loop, range)
-    if music == nil then -- If a music file isn't actively playing...then go ahead and set a new one.
+    if save.music and music == nil then -- If a music file isn't actively playing...then go ahead and set a new one.
         music = fle.new(file)
         if loop then -- If set to loop, then ... loop it!
             music:setLoopRange(range or 0)
@@ -94,24 +106,6 @@ function newmusic(file, loop, range)
             end)
         end
     end
-end
-
-function pd.timer:resetnew(duration, startValue, endValue, easingFunction)
-	self.duration = duration
-	self._startValue = startValue
-	self._endValue = endValue or 0
-	self._easingFunction = easingFunction or pd.easingFunctions.linear
-	self._currentTime = 0
-	self._lastTime = nil
-	self.active = true
-	self.hasReversed = false
-    self.reverses = false
-    self.repeats = false
-	self.remainingDelay = self.delay
-	self.value = self._startValue
-	self._calledOnRepeat = nil
-    self.discardOnCompletion = false
-    self.paused = false
 end
 
 -- This function returns the inputted number, with the ordinal suffix tacked on at the end (as a string)
@@ -129,7 +123,7 @@ function ordinal(num)
     end
 end
 
-function backtotitle(acallback, bcallback)
+function backtotitle(bcallback, acallback)
     local image = gfx.image.new(400, 240)
     local sasser = gfx.font.new('fonts/sasser')
     local small = gfx.font.new('fonts/small')
@@ -139,9 +133,9 @@ function backtotitle(acallback, bcallback)
         gfx.fillRect(10, 10, 380, 220)
         gfx.setColor(gfx.kColorBlack)
         gfx.drawRect(13, 13, 374, 214)
-        sasser:drawTextAligned('Are you sure you wanna quit?', 200, 25, kTextAlignment.center)
-        small:drawTextAligned('if you quit now, all the progress in\nthis game will be lost. your\nscore won\'t be saved, and you can\'t\ncome back later. are you sure?', 200, 80, kTextAlignment.center)
-        small:drawTextAligned('B - quit to title   A - keep playing', 200, 200, kTextAlignment.center)
+        sasser:drawTextAligned(text('returnhead'), 200, 25, kTextAlignment.center)
+        small:drawTextAligned(text('returntext'), 200, 80, kTextAlignment.center)
+        small:drawTextAligned(text('returnprompts'), 200, 200, kTextAlignment.center)
     gfx.popContext(image)
     local sprite = gfx.sprite.new(image)
     sprite:setCenter(0, 0)
@@ -153,10 +147,11 @@ function backtotitle(acallback, bcallback)
         AButtonDown = function()
             pd.inputHandlers.pop()
             sprite:remove()
-            click:play()
+            if save.sfx then click:play() end
             click = nil
             sprite = nil
             backHandlers = nil
+            scenemanager:transitionscene(title)
             if acallback ~= nil then
                 acallback()
             end
@@ -165,11 +160,10 @@ function backtotitle(acallback, bcallback)
         BButtonDown = function()
             pd.inputHandlers.pop()
             sprite:remove()
-            click:play()
+            if save.sfx then click:play() end
             click = nil
             sprite = nil
             backHandlers = nil
-            scenemanager:transitionscene(title)
             if bcallback ~= nil then
                 bcallback()
             end
@@ -181,21 +175,10 @@ function backtotitle(acallback, bcallback)
     small = nil
 end
 
--- This function shakes the screen. int is a number representing intensity. time is a number representing duration
-function shakies(time, int)
-    if pd.getReduceFlashing() then -- If reduce flashing is enabled, then don't shake.
-        return
-    end
-    anim_shakies = pd.timer.new(time or 500, int or 10, 0, pd.easingFunctions.outElastic)
-end
-
+import 'credits'
 scenemanager:switchscene(title)
 
 function pd.update()
-    -- Screen shake update logic
-    if anim_shakies ~= nil then
-        pd.display.setOffset(anim_shakies.value, 0)
-    end
     -- Catch-all stuff ...
     gfx.sprite.update()
     pd.timer.updateTimers()

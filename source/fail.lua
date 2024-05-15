@@ -1,4 +1,4 @@
-import 'stats'
+import 'title'
 import 'rehearsal'
 
 -- Setting up consts
@@ -6,6 +6,7 @@ local pd <const> = playdate
 local gfx <const> = pd.graphics
 local smp <const> = pd.sound.sampleplayer
 local fle <const> = pd.sound.fileplayer
+local text <const> = gfx.getLocalizedText
 
 class('fail').extends(gfx.sprite) -- Create the scene's class
 function fail:init(...)
@@ -16,8 +17,12 @@ function fail:init(...)
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
-        menu:addMenuItem('return to title', function()
-            assets.click:play()
+        menu:addMenuItem(text('slideagain'), function()
+            if save.sfx then assets.click:play() end
+            scenemanager:transitionscene(rehearsal, 0, {})
+        end)
+        menu:addMenuItem(text('slidetitle'), function()
+            if save.sfx then assets.click:play() end
             scenemanager:switchscene(title)
         end)
     end
@@ -37,17 +42,19 @@ function fail:init(...)
     }
     vars.failHandlers = {
         AButtonDown = function()
-            scenemanager:switchscene(title)
-            assets.click:play()
+            p1 = true
+            scenemanager:transitionscene(rehearsal, 0, {})
+            if save.sfx then assets.click:play() end
+            fademusic()
         end,
 
         BButtonDown = function()
             scenemanager:switchscene(title)
-            assets.click:play()
+            if save.sfx then assets.click:play() end
         end,
     }
 
-    save.plays += 1
+    save[mode .. '_plays'] += 1
 
     if vars.score >= 25 then
         assets.image_fail = gfx.image.new('images/fail_good_' .. vars.image)
@@ -56,25 +63,31 @@ function fail:init(...)
     end
 
     if easy then
-        if vars.score > save.score_easy and vars.score > 0 then
-            if vars.score >= 10 and not save.hard then
+        if vars.score > save['score_' .. mode .. '_easy'] and vars.score > 0 then
+            if mode == "arcade" and vars.score >= 25 and not save.hard then
                 vars.draw = 'hard'
                 save.hard = true
             else
                 vars.draw = 'new'
             end
-            save.score_easy = vars.score
+            save['score_' .. mode .. '_easy'] = vars.score
             if catalog then
-                pd.scoreboards.addScore('easy', vars.score)
+                pd.scoreboards.addScore(mode .. '_easy', vars.score)
             end
         end
     else
-        if vars.score > save.score_hard and vars.score > 0 then
+        if vars.score > save['score_' .. mode .. '_hard'] and vars.score > 0 then
             vars.draw = 'new'
-            save.score_hard = vars.score
+            save['score_' .. mode .. '_hard'] = vars.score
             if catalog then
-                pd.scoreboards.addScore('hard', vars.score)
+                pd.scoreboards.addScore(mode .. '_hard', vars.score)
             end
+        end
+    end
+
+    if mode == "arcade" then
+        if save.arcade_plays == 10 then
+            vars.draw = 'multi'
         end
     end
 
@@ -82,27 +95,29 @@ function fail:init(...)
         if vars.showtime then
             assets.image_fail:draw(0, 0)
         end
-        assets.sasser:drawTextAligned('Game Over', 200, 10, kTextAlignment.center)
-        assets.small:drawTextAligned('your score: ' .. vars.score, 200, 30, kTextAlignment.center)
+        assets.sasser:drawTextAligned(text('gameover'), 200, 10, kTextAlignment.center)
+        assets.small:drawTextAligned(text('yourscore') .. vars.score, 200, 30, kTextAlignment.center)
         if vars.draw == 'hard' then
-            assets.small:drawTextAligned('(hard mode unlocked!)', 200, 50, kTextAlignment.center)
+            assets.small:drawTextAligned(text('hardunlocked'), 200, 50, kTextAlignment.center)
+        elseif vars.draw == 'oneshot' then
+            assets.small:drawTextAligned(text('oneshotunlocked'), 200, 50, kTextAlignment.center)
         elseif vars.draw == 'new' then
-            assets.small:drawTextAligned('(a new high!)', 200, 50, kTextAlignment.center)
+            assets.small:drawTextAligned(text('newhigh'), 200, 50, kTextAlignment.center)
         elseif vars.draw == 'high' then
             if easy then
-                assets.small:drawTextAligned('high score: ' .. save.score_easy, 200, 50, kTextAlignment.center)
+                assets.small:drawTextAligned(text('highscore') .. save['score_' .. mode .. '_easy'], 200, 50, kTextAlignment.center)
             else
-                assets.small:drawTextAligned('high score: ' .. save.score_hard, 200, 50, kTextAlignment.center)
+                assets.small:drawTextAligned(text('highscore') .. save['score_' .. mode .. '_hard'], 200, 50, kTextAlignment.center)
             end
         end
-        assets.small:drawTextAligned('A/B - return to title', 200, 210, kTextAlignment.center)
+        assets.small:drawTextAligned(text('gameoverprompts'), 200, 220, kTextAlignment.center)
     end)
 
     pd.timer.performAfterDelay(1200, function()
         vars.showtime = true
         pd.inputHandlers.push(vars.failHandlers)
         gfx.sprite.redrawBackground()
-        assets.spotlight:play()
+        if save.sfx then assets.spotlight:play() end
     end)
 
     newmusic('audio/music/music1', true)

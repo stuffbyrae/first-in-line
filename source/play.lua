@@ -1,35 +1,44 @@
 import 'title'
 import 'rehearsal'
 import 'fail'
+import 'results'
+import 'shaker'
 
 -- Setting up consts
 local pd <const> = playdate
 local gfx <const> = pd.graphics
 local smp <const> = pd.sound.sampleplayer
 local fle <const> = pd.sound.fileplayer
+local text <const> = gfx.getLocalizedText
 
 class('play').extends(gfx.sprite) -- Create the scene's class
 function play:init(...)
     play.super.init(self)
     local args = {...} -- Arguments passed in through the scene management will arrive here
     gfx.sprite.setAlwaysRedraw(true)
-    
+
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
-        menu:addMenuItem('return to title', function()
+        menu:addMenuItem(text('slidetitle'), function()
             fademusic(0)
             backtotitle(function()
-                vars.pause:start()
+                if mode ~= "oneshot" then
+                    vars.pause:start()
+                end
             end,
             function()
                 assets.crowd:stop()
                 assets.crowd_angry:stop()
-                assets.applause:stop()
+                assets.applause_1:stop()
+                assets.applause_2:stop()
+                assets.applause_3:stop()
                 assets.light_applause:stop()
                 assets.footsteps:stop()
             end)
-            vars.pause:pause()
+            if mode ~= "oneshot" then
+                vars.pause:pause()
+            end
         end)
     end
 
@@ -65,6 +74,12 @@ function play:init(...)
         whisper_r = smp.new('audio/sfx/whisper_r'),
         whisper_u = smp.new('audio/sfx/whisper_u'),
         whisper_d = smp.new('audio/sfx/whisper_d'),
+        whisper_c = smp.new('audio/sfx/whisper_s'),
+        whisper_w = smp.new('audio/sfx/whisper_w'),
+        whisper_9 = smp.new('audio/sfx/whisper_['),
+        whisper_0 = smp.new('audio/sfx/whisper_]'),
+        whisper_s = smp.new('audio/sfx/whisper_s'),
+        whisper_m = smp.new('audio/sfx/whisper_m'),
         heckle_1 = smp.new('audio/sfx/heckle_1'),
         heckle_2 = smp.new('audio/sfx/heckle_2'),
         heckle_3 = smp.new('audio/sfx/heckle_3'),
@@ -73,7 +88,7 @@ function play:init(...)
         laugh_2 = smp.new('audio/sfx/laugh_2'),
         laugh_3 = smp.new('audio/sfx/laugh_3'),
     }
-    
+
     vars = { -- All variables go here. Args passed in from earlier, scene variables, etc.
         score = args[1],
         button_string = args[2],
@@ -90,39 +105,52 @@ function play:init(...)
         hint_string = '',
         show_hint = false,
         roses = 0,
+        crank = 0,
+        totalcrank = 0,
+        lastcrank = 0,
+        mic = 0,
+        mic_cooldown = false,
     }
     vars.playHandlers = {
         AButtonDown = function()
-            self:button(32)
+            self:button(5)
         end,
 
         BButtonDown = function()
-            self:button(16)
+            self:button(6)
         end,
 
         upButtonDown = function()
-            self:button(4)
-        end,
-
-        downButtonDown = function()
-            self:button(8)
-        end,
-
-        leftButtonDown = function()
             self:button(1)
         end,
 
-        rightButtonDown = function()
+        downButtonDown = function()
             self:button(2)
+        end,
+
+        leftButtonDown = function()
+            self:button(3)
+        end,
+
+        rightButtonDown = function()
+            self:button(4)
         end,
     }
     pd.inputHandlers.push(vars.playHandlers)
 
-    vars.pause = pd.timer.new(9000 + (1000 * math.random()), function() self:pause_callback() end)
+    if mode ~= "oneshot" then
+        vars.pause = pd.timer.new(6000 + (1000 * math.random()), function() self:pause_callback() end)
+    end
 
     vars.anim_person.repeats = true
     vars.anim_audience.reverses = true
     vars.anim_audience.repeats = true
+
+    vars.shaker = Shaker.new(function()
+        if save.shaking and vars.in_progress then
+            self:button(11)
+        end
+    end, {sensitivity = Shaker.kSensitivityHigh, threshold = 0.5, samples = 40})
 
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
         assets.stage[vars.stage_rand]:draw(0, 0)
@@ -192,31 +220,48 @@ function play:init(...)
         self:moveTo(self.timer_x.value, self.timer_y.value)
     end
 
+    if save.crank then
+        function pd.crankDocked()
+            play:button(9)
+        end
+
+        function pd.crankUndocked()
+            play:button(10)
+        end
+    end
+
     -- Set the sprites
     self.person = play_person()
     self.hud = play_hud()
     self:add()
 
     assets.footsteps:setRate(1.25)
-    assets.footsteps:play()
+    if save.sfx then assets.footsteps:play() end
 
     pd.timer.performAfterDelay(2700, function()
-        vars.anim_person:resetnew(1, 5, 5.9)
+        vars.anim_person = pd.timer.new(1, 5, 5.9)
     end)
 
     pd.timer.performAfterDelay(3000, function()
-        assets.spotlight:play()
+        if save.sfx then assets.spotlight:play() end
         vars.spotlight = true
-        vars.anim_person:resetnew(1, 6, 6.9)
+        vars.anim_person = pd.timer.new(1, 6, 6.9)
         newmusic('audio/music/music2', true)
         vars.in_progress = true
+        if save.shaking then
+            pd.startAccelerometer()
+            vars.shaker:setEnabled(true)
+        end
+        if save.mic then
+            pd.sound.micinput.startListening()
+        end
         pd.timer.performAfterDelay(750, function()
-            assets.shhh:play()
+            if save.sfx then assets.shhh:play() end
             assets.crowd:stop()
         end)
     end)
 
-    assets.crowd:play(0)
+    if save.sfx then assets.crowd:play(0) end
 end
 
 function play:pause_callback()
@@ -224,38 +269,50 @@ function play:pause_callback()
         if easy then
             save.hints += 1
             local button = vars.button_string[vars.button_index]
-            if button == 1 then
-                -- Left is 1
-                vars.hint_string = 'L'
-                assets.whisper_l:play()
-            elseif button == 2 then
-                -- Right is 2
-                vars.hint_string = 'R'
-                assets.whisper_r:play()
+            if button == 3 then
+                vars.hint_string = 'l'
+                if save.sfx then assets.whisper_l:play() end
             elseif button == 4 then
-                -- Up is 4
-                vars.hint_string = 'U'
-                assets.whisper_u:play()
+                vars.hint_string = 'r'
+                if save.sfx then assets.whisper_r:play() end
+            elseif button == 1 then
+                vars.hint_string = 'u'
+                if save.sfx then assets.whisper_u:play() end
+            elseif button == 2 then
+                vars.hint_string = 'd'
+                if save.sfx then assets.whisper_d:play() end
+            elseif button == 6 then
+                vars.hint_string = 'b'
+                if save.sfx then assets.whisper_b:play() end
+            elseif button == 5 then
+                vars.hint_string = 'a'
+                if save.sfx then assets.whisper_a:play() end
+            elseif button == 7 then
+                vars.hint_string = 'c'
+                if save.sfx then assets.whisper_c:play() end
             elseif button == 8 then
-                -- Down is 8
-                vars.hint_string = 'D'
-                assets.whisper_d:play()
-            elseif button == 16 then
-                -- B is 16
-                vars.hint_string = 'B'
-                assets.whisper_b:play()
-            elseif button == 32 then
-                -- A is 32
-                vars.hint_string = 'A'
-                assets.whisper_a:play()
+                vars.hint_string = 'w'
+                if save.sfx then assets.whisper_w:play() end
+            elseif button == 9 then
+                vars.hint_string = '{'
+                if save.sfx then assets.whisper_9:play() end
+            elseif button == 10 then
+                vars.hint_string = '}'
+                if save.sfx then assets.whisper_0:play() end
+            elseif button == 11 then
+                vars.hint_string = 's'
+                if save.sfx then assets.whisper_s:play() end
+            elseif button == 12 then
+                vars.hint_string = 'm'
+                if save.sfx then assets.whisper_m:play() end
             end
             vars.show_hint = true
         else
             if vars.misses < 3 then
                 save.heckles += 1
-                assets['heckle_' .. math.random(1, 4)]:play()
+                if save.sfx then assets['heckle_' .. math.random(1, 4)]:play() end
                 pd.timer.performAfterDelay(1750, function()
-                assets['laugh_' .. math.random(1, 3)]:play()
+                if save.sfx then assets['laugh_' .. math.random(1, 3)]:play() end
                     vars.misses += 1
                     save.misses += 1
                 end)
@@ -267,47 +324,86 @@ end
 function play:hit(button, index)
     if vars.in_progress then
         vars.anim_person = pd.timer.new(300, 7, 8.9)
-        vars.pause:pause()
-        vars.pause:remove()
-        vars.pause = pd.timer.new(5000 + (1000 * math.random()), function() self:pause_callback() end)
+        if mode ~= "oneshot" then
+            vars.pause:pause()
+            vars.pause:remove()
+            vars.pause = pd.timer.new(4000 + (1000 * math.random()), function() self:pause_callback() end)
+        end
         assets.honk:setRate(1 + ((math.random() / 2) - 0.5))
-        assets.honk:play()
+        if save.sfx then assets.honk:play() end
         vars.show_hint = false
-        if index ~= 1 then
+        if vars.button_text_string ~= '' then
             vars.button_text_string = vars.button_text_string .. ', '
         end
-        if button == 1 then
-            -- Left is 1
+        if button == 3 then
             vars.button_text_string = vars.button_text_string .. 'L'
-        elseif button == 2 then
-            -- Right is 2
-            vars.button_text_string = vars.button_text_string .. 'R'
         elseif button == 4 then
-            -- Up is 4
+            vars.button_text_string = vars.button_text_string .. 'R'
+        elseif button == 1 then
             vars.button_text_string = vars.button_text_string .. 'U'
-        elseif button == 8 then
-            -- Down is 8
+        elseif button == 2 then
             vars.button_text_string = vars.button_text_string .. 'D'
-        elseif button == 16 then
-            -- B is 16
+        elseif button == 6 then
             vars.button_text_string = vars.button_text_string .. 'B'
-        elseif button == 32 then
-            -- A is 32
+        elseif button == 5 then
             vars.button_text_string = vars.button_text_string .. 'A'
+        elseif button == 7 then
+            vars.button_text_string = vars.button_text_string .. 'C'
+        elseif button == 8 then
+            vars.button_text_string = vars.button_text_string .. 'W'
+        elseif button == 9 then
+            vars.button_text_string = vars.button_text_string .. '['
+        elseif button == 10 then
+            vars.button_text_string = vars.button_text_string .. ']'
+        elseif button == 11 then
+            vars.button_text_string = vars.button_text_string .. 'S'
+        elseif button == 12 then
+            vars.button_text_string = vars.button_text_string .. 'M'
         end
     end
 end
 
-function play:miss()
+function play:miss(button, index)
     if vars.in_progress then
         vars.misses += 1
         save.misses += 1
-        vars.pause:pause()
-        vars.pause:remove()
-        vars.anim_person = pd.timer.new(1, 13, 14.9)
-        assets.cough:play()
-        if vars.misses >= 3 then
+        if mode ~= "oneshot" then
+            vars.pause:pause()
+            vars.pause:remove()
+        end
+        if mode == "oneshot" or vars.misses >= 3 then
             self:lose()
+        else
+            vars.anim_person = pd.timer.new(1, 13, 14.9)
+            if save.sfx then assets.cough:play() end
+        end
+        if vars.button_text_string ~= '' then
+            vars.button_text_string = vars.button_text_string .. ', '
+        end
+        if button == 3 then
+            vars.button_text_string = vars.button_text_string .. 'l'
+        elseif button == 4 then
+            vars.button_text_string = vars.button_text_string .. 'r'
+        elseif button == 1 then
+            vars.button_text_string = vars.button_text_string .. 'u'
+        elseif button == 2 then
+            vars.button_text_string = vars.button_text_string .. 'd'
+        elseif button == 6 then
+            vars.button_text_string = vars.button_text_string .. 'b'
+        elseif button == 5 then
+            vars.button_text_string = vars.button_text_string .. 'a'
+        elseif button == 7 then
+            vars.button_text_string = vars.button_text_string .. 'c'
+        elseif button == 8 then
+            vars.button_text_string = vars.button_text_string .. 'w'
+        elseif button == 9 then
+            vars.button_text_string = vars.button_text_string .. '{'
+        elseif button == 10 then
+            vars.button_text_string = vars.button_text_string .. '}'
+        elseif button == 11 then
+            vars.button_text_string = vars.button_text_string .. 's'
+        elseif button == 12 then
+            vars.button_text_string = vars.button_text_string .. 'm'
         end
     end
 end
@@ -318,16 +414,25 @@ function play:addrose()
 end
 
 function play:win()
+    vars.shaker:setEnabled(false)
+    pd.stopAccelerometer()
+    pd.sound.micinput.stopListening()
     if vars.in_progress then
         vars.in_progress = false
+        if mode == "multi" then
+            p1 = not p1
+        else
+            vars.score += 1
+        end
         vars.anim_person = pd.timer.new(750, 15, 18.9)
         vars.anim_person.repeats = true
-        if vars.misses <= 1 then
-            assets['applause_' .. math.random(1, 3)]:play()
-        else
-            assets.light_applause:play()
+        if save.sfx then
+            if vars.misses <= 1 then
+                assets['applause_' .. math.random(1, 3)]:play()
+            else
+                assets.light_applause:play()
+            end
         end
-        vars.score += 1
         pd.timer.performAfterDelay(500 + (500 * math.random()), function() self:addrose() end)
         pd.timer.performAfterDelay(1000 + (500 * math.random()), function() self:addrose() end)
         pd.timer.performAfterDelay(2000 + (500 * math.random()), function() self:addrose() end)
@@ -339,18 +444,20 @@ function play:win()
 end
 
 function play:lose()
+    vars.shaker:setEnabled(false)
+    pd.stopAccelerometer()
+    pd.sound.micinput.stopListening()
     if vars.in_progress then
         vars.in_progress = false
-        assets.scratch:play()
+        if save.sfx then assets.scratch:play() end
         vars.anim_person = pd.timer.new(500, 19, 20.9)
         vars.anim_person.repeats = true
-        vars.button_text_string = ''
-        assets.crowd_angry:play()
+        if save.sfx then assets.crowd_angry:play() end
         fademusic(500)
         pd.timer.performAfterDelay(500, function()
             vars.spotlight = false
-            assets.spotlight:play()
-            assets.cane:play()
+            if save.sfx then assets.spotlight:play() end
+            if save.sfx then assets.cane:play() end
             vars.anim_person = pd.timer.new(500, 21, 22.9)
             vars.anim_person.repeats = true
             vars.anim_cane = pd.timer.new(900, -253, -106, pd.easingFunctions.outBack)
@@ -359,11 +466,16 @@ function play:lose()
             vars.anim_cane = pd.timer.new(250, -106, -253)
         end)
         pd.timer.performAfterDelay(1300, function()
-            assets.whoosh:play()
+            if save.sfx then assets.whoosh:play() end
+            vars.button_text_string = ''
             vars.anim_person = pd.timer.new(500, 23, 27)
         end)
         pd.timer.performAfterDelay(2000, function()
-            scenemanager:transitionscene(fail, vars.score)
+            if mode == "multi" then
+                scenemanager:transitionscene(results)
+            else
+                scenemanager:transitionscene(fail, vars.score)
+            end
         end)
     end
 end
@@ -377,7 +489,39 @@ function play:button(released)
                 self:win()
             end
         else
-            self:miss()
+            self:miss(released, vars.button_index)
+        end
+    end
+end
+
+function play:update()
+    vars.shaker:update()
+    if save.crank then
+        vars.crank = pd.getCrankChange()
+        vars.totalcrank += math.floor(vars.crank)
+        if math.floor(vars.crank) == 0 then
+            vars.totalcrank = 0
+        end
+        if vars.totalcrank >= 230 then
+            play:button(7)
+            vars.totalcrank = 0
+        elseif vars.totalcrank <= -230 then
+            play:button(8)
+            vars.totalcrank = 0
+        end
+    end
+    if save.mic then
+        if vars.mic_cooldown then
+            vars.mic = 0
+        else
+            vars.mic = pd.sound.micinput.getLevel()
+        end
+        if vars.mic > 0.3 then
+            play:button(12)
+            vars.mic_cooldown = true
+            pd.timer.performAfterDelay(750, function()
+                vars.mic_cooldown = false
+            end)
         end
     end
 end
