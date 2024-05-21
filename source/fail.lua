@@ -87,7 +87,7 @@ function fail:init(...)
 
     if mode == "arcade" then
         if save.arcade_plays == 10 then
-            vars.draw = 'multi'
+            vars.draw = 'oneshot'
         end
     end
 
