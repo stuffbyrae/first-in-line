@@ -72,7 +72,7 @@ function fail:init(...)
             end
             save['score_' .. mode .. '_easy'] = vars.score
             if catalog then
-                pd.scoreboards.addScore(mode .. '_easy', vars.score)
+                pd.scoreboards.addScore(mode .. 'easy', vars.score)
             end
         end
     else
@@ -80,7 +80,7 @@ function fail:init(...)
             vars.draw = 'new'
             save['score_' .. mode .. '_hard'] = vars.score
             if catalog then
-                pd.scoreboards.addScore(mode .. '_hard', vars.score)
+                pd.scoreboards.addScore(mode .. 'hard', vars.score)
             end
         end
     end

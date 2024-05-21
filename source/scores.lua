@@ -24,6 +24,8 @@ function scores:init(...)
 
     assets = { -- All assets go here. Images, sounds, fonts, etc.
         image_bg = gfx.image.new('images/bg'),
+        image_bg_left = gfx.image.new('images/bg_left'),
+        image_bg_right = gfx.image.new('images/bg_right'),
         sasser = gfx.font.new('fonts/sasser'),
         small = gfx.font.new('fonts/small'),
         spotlight = smp.new('audio/sfx/spotlight'),
@@ -32,7 +34,7 @@ function scores:init(...)
 
     vars = { -- All variables go here. Args passed in from earlier, scene variables, etc.
         showtime = false,
-        board = "arcade_easy",
+        board = "arcadeeasy",
         mode = "arcade",
         hard = false,
         result = {},
@@ -69,7 +71,15 @@ function scores:init(...)
 
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
         if vars.showtime then
-            assets.image_bg:draw(0, 0)
+            if save.arcade_plays >= 10 and not vars.loading then
+                if vars.mode == "arcade" then
+                    assets.image_bg_right:draw(0, 0)
+                elseif vars.mode == "oneshot" then
+                    assets.image_bg_left:draw(0, 0)
+                end
+            else
+                assets.image_bg:draw(0, 0)
+            end
             gfx.setImageDrawMode(gfx.kDrawModeNXOR)
             assets.sasser:drawTextAligned(text(vars.mode), 200, 10, kTextAlignment.center)
             if save.hard then
@@ -81,7 +91,7 @@ function scores:init(...)
             else
                 assets.small:drawTextAligned(text('globalscores'), 200, 25, kTextAlignment.center)
             end
-            if vars.result.scores ~= nil then
+            if vars.result.scores ~= nil and next(vars.result.scores) ~= nil then
                 for _, v in ipairs(vars.result.scores) do
                     assets.small:drawTextAligned(v.rank .. '. ' .. v.player:lower() .. ' - ' .. v.value, 200, 50 + (15 * (v.rank - 1)), kTextAlignment.center)
                 end
@@ -133,13 +143,21 @@ function scores:refreshboards()
     gfx.sprite.redrawBackground()
     vars.board = vars.mode
     if vars.hard then
-        vars.board = vars.board .. '_hard'
+        vars.board = vars.board .. 'hard'
     else
-        vars.board = vars.board .. '_easy'
+        vars.board = vars.board .. 'easy'
+    end
+    if pd.isSimulator == 1 then
+        pd.scoreboards.getScoreboards(function(status, result)
+            printTable(status)
+            printTable(result)
+        end)
     end
     pd.scoreboards.getScores(vars.board, function(status, result)
-        printTable(status)
-        printTable(result)
+        if pd.isSimulator == 1 then
+            printTable(status)
+            printTable(result)
+        end
         if status.code == "OK" then
             vars.result = result
         else

@@ -150,7 +150,7 @@ function play:init(...)
         if save.shaking and vars.in_progress then
             self:button(11)
         end
-    end, {sensitivity = Shaker.kSensitivityHigh, threshold = 0.5, samples = 40})
+    end, {sensitivity = Shaker.kSensitivityMedium, threshold = 0.5, samples = 20})
 
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
         assets.stage[vars.stage_rand]:draw(0, 0)
@@ -516,7 +516,7 @@ function play:update()
         else
             vars.mic = pd.sound.micinput.getLevel()
         end
-        if vars.mic > 0.3 then
+        if vars.mic > 0.2 then
             play:button(12)
             vars.mic_cooldown = true
             pd.timer.performAfterDelay(750, function()
