@@ -42,9 +42,16 @@
 "loadingglobalscores" = "loading global scores..."
 "failedglobalscores" = "failed to get scores."
 "emptyglobalscores" = "this board is empty!"
-"yourank" = "You rank... "
+"yourank" = "rank: "
+"youscore" = "score: "
 "geteasyscores" = "B back - A get easy scores"
 "gethardscores" = "B back - A get hard scores"
+"username1" = "change your name!!"
+"username2" = "C play.date/account"
+"st" = "st"
+"nd" = "nd"
+"rd" = "rd"
+"th" = "th"
 
 -- Settings
 "true" = "Y"

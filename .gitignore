@@ -2,3 +2,5 @@
 .DS_Store
 .nova
 versions.zip
+tmp
+versions

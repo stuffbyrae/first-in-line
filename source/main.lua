@@ -17,7 +17,6 @@ local fle <const> = pd.sound.fileplayer
 local text <const> = gfx.getLocalizedText
 
 pd.display.setRefreshRate(30)
-pd.setCrankSoundsDisabled(true)
 gfx.setLineWidth(2)
 gfx.setBackgroundColor(gfx.kColorBlack)
 pd.setMenuImage(gfx.image.new('images/pause'))
@@ -175,7 +174,6 @@ function backtotitle(bcallback, acallback)
     small = nil
 end
 
-import 'credits'
 scenemanager:switchscene(title)
 
 function pd.update()

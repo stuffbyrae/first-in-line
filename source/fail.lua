@@ -38,7 +38,8 @@ function fail:init(...)
         score = args[1],
         showtime = false,
         image = math.random(1, 4),
-        draw = 'high'
+        draw = 'high',
+        inputs = 0,
     }
     vars.failHandlers = {
         AButtonDown = function()
@@ -62,6 +63,22 @@ function fail:init(...)
         assets.image_fail = gfx.image.new('images/fail_bad_' .. vars.image)
     end
 
+    if save.crank and not save.shaking and not save.mic then
+        vars.inputs = 1
+    elseif not save.crank and save.shaking and not save.mic then
+        vars.inputs = 2
+    elseif not save.crank and not save.shaking and save.mic then
+        vars.inputs = 3
+    elseif save.crank and save.shaking and not save.mic then
+        vars.inputs = 4
+    elseif save.crank and not save.shaking and save.mic then
+        vars.inputs = 5
+    elseif not save.crank and save.shaking and save.mic then
+        vars.inputs = 6
+    elseif save.crank and save.shaking and save.mic then
+        vars.inputs = 7
+    end
+
     if easy then
         if vars.score > save['score_' .. mode .. '_easy'] and vars.score > 0 then
             if mode == "arcade" and vars.score >= 25 and not save.hard then
@@ -72,7 +89,12 @@ function fail:init(...)
             end
             save['score_' .. mode .. '_easy'] = vars.score
             if catalog then
-                pd.scoreboards.addScore(mode .. 'easy', vars.score)
+                pd.scoreboards.addScore(mode .. 'easy', vars.score .. vars.inputs, function(status, result)
+                    if pd.isSimulator == 1 then
+                        printTable(status)
+                        printTable(result)
+                    end
+                end)
             end
         end
     else
@@ -80,7 +102,12 @@ function fail:init(...)
             vars.draw = 'new'
             save['score_' .. mode .. '_hard'] = vars.score
             if catalog then
-                pd.scoreboards.addScore(mode .. 'hard', vars.score)
+                pd.scoreboards.addScore(mode .. 'hard', vars.score .. vars.inputs, function(status, result)
+                    if pd.isSimulator == 1 then
+                        printTable(status)
+                        printTable(result)
+                    end
+                end)
             end
         end
     end

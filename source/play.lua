@@ -110,6 +110,7 @@ function play:init(...)
         lastcrank = 0,
         mic = 0,
         mic_cooldown = false,
+        dock_dampen = false,
     }
     vars.playHandlers = {
         AButtonDown = function()
@@ -145,6 +146,8 @@ function play:init(...)
     vars.anim_person.repeats = true
     vars.anim_audience.reverses = true
     vars.anim_audience.repeats = true
+
+    vars.dock_init = pd.isCrankDocked()
 
     vars.shaker = Shaker.new(function()
         if save.shaking and vars.in_progress then
@@ -247,6 +250,7 @@ function play:init(...)
         vars.spotlight = true
         vars.anim_person = pd.timer.new(1, 6, 6.9)
         newmusic('audio/music/music2', true)
+        vars.dock_init = pd.isCrankDocked()
         vars.in_progress = true
         if save.shaking then
             pd.startAccelerometer()
@@ -484,12 +488,29 @@ function play:button(released)
     if vars.in_progress then
         if vars.button_string[vars.button_index] == released then
             self:hit(released, vars.button_index)
+            if released == 9 or released == 10 then
+                vars.dock_dampen = false
+            end
             vars.button_index += 1
             if vars.button_index > #vars.button_string then
                 self:win()
             end
         else
-            self:miss(released, vars.button_index)
+            if released == 9 or released == 10 then
+                if not vars.dock_init then
+                    vars.dock_init = true
+                    return
+                else
+                    if vars.dock_dampen then
+                        return
+                    else
+                        self:miss(released, vars.button_index)
+                        vars.dock_dampen = true
+                    end
+                end
+            else
+                self:miss(released, vars.button_index)
+            end
         end
     end
 end

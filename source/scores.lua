@@ -93,7 +93,9 @@ function scores:init(...)
             end
             if vars.result.scores ~= nil and next(vars.result.scores) ~= nil then
                 for _, v in ipairs(vars.result.scores) do
-                    assets.small:drawTextAligned(v.rank .. '. ' .. v.player:lower() .. ' - ' .. v.value, 200, 50 + (15 * (v.rank - 1)), kTextAlignment.center)
+                    if v.rank <= 9 then
+                        assets.small:drawTextAligned(v.rank .. '. ' .. v.player:lower() .. ' - ' .. math.floor(v.value * 0.1) .. ' ' .. self:getControls(math.floor(v.value % 10)), 200, 40 + (15 * (v.rank - 1)), kTextAlignment.center)
+                    end
                 end
             elseif vars.result == "fail" then
                 assets.small:drawTextAligned(text('failedglobalscores'), 200, 110, kTextAlignment.center)
@@ -104,8 +106,13 @@ function scores:init(...)
                     assets.small:drawTextAligned(text('emptyglobalscores'), 200, 110, kTextAlignment.center)
                 end
             end
-            if vars.best[1] ~= nil then
-                assets.sasser:drawTextAligned(text('yourank') .. ordinal(vars.best.value) .. '!', 200, 180, kTextAlignment.center)
+            if vars.best.rank ~= nil then
+                assets.small:drawTextAligned(text('yourank') .. ordinal(vars.best.rank), 45, 185)
+            end
+            assets.small:drawTextAligned(text('youscore') .. save['score_' .. vars.mode .. '_' .. (vars.hard and "hard" or "easy")], 40, 200)
+            if vars.best.player ~= nil and string.len(vars.best.player) == 16 and tonumber(vars.best.player) then
+                assets.small:drawTextAligned(text('username1'), 355, 185, kTextAlignment.right)
+                assets.small:drawTextAligned(text('username2'), 360, 200, kTextAlignment.right)
             end
             if save.hard then
                 if not vars.loading then
@@ -134,6 +141,26 @@ function scores:init(...)
 
     -- Set the sprites
     self:add()
+end
+
+function scores:getControls(num)
+    if num == 0 then
+        return 'D'
+    elseif num == 1 then
+        return 'DE'
+    elseif num == 2 then
+        return 'DF'
+    elseif num == 3 then
+        return 'DG'
+    elseif num == 4 then
+        return 'DEF'
+    elseif num == 5 then
+        return 'DEG'
+    elseif num == 6 then
+        return 'DFG'
+    elseif num == 7 then
+        return 'DEFG'
+    end
 end
 
 function scores:refreshboards()
@@ -169,6 +196,7 @@ function scores:refreshboards()
     pd.scoreboards.getPersonalBest(vars.board, function(status, result)
         if status.code == "OK" then
             vars.best = result
+            gfx.sprite.redrawBackground()
         end
     end)
 end

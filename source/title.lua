@@ -33,6 +33,8 @@ function title:init(...)
 
     assets = { -- All assets go here. Images, sounds, fonts, etc.
         image_title = gfx.image.new('images/title'),
+        image_title_left = gfx.image.new('images/title_left'),
+        image_title_right = gfx.image.new('images/title_right'),
         sasser = gfx.font.new('fonts/sasser'),
         small = gfx.font.new('fonts/small'),
         spotlight = smp.new('audio/sfx/spotlight'),
@@ -101,7 +103,13 @@ function title:init(...)
 
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
         if vars.showtime then
-            assets.image_title:draw(0, 0)
+            if vars.selection == 1 then
+                assets.image_title_right:draw(0, 0)
+            elseif vars.selection == #vars.selections then
+                assets.image_title_left:draw(0, 0)
+            else
+                assets.image_title:draw(0, 0)
+            end
         end
         assets.sasser:drawTextAligned(text(vars.selections[vars.selection]), 227, 160, kTextAlignment.center)
         assets.small:drawTextAligned(text(vars.selections[vars.selection] .. 'desc'), 227, 180, kTextAlignment.center)

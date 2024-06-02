@@ -57,9 +57,9 @@ function results:init(...)
     save.multi_plays += 1
 
     if p1 then
-        assets.image_results = gfx.image.new('images/bg')
+        assets.image_results = gfx.image.new('images/bg_p2')
     else
-        assets.image_results = gfx.image.new('images/bg')
+        assets.image_results = gfx.image.new('images/bg_p1')
     end
 
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
