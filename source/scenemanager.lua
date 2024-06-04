@@ -13,6 +13,20 @@ class('scenemanager').extends()
 function scenemanager:init()
     self.transitiontime = 700
     self.transitioning = false
+    self.queuedscene = nil
+    self.queuedargs = nil
+end
+
+function scenemanager:transitionscenequeued()
+    if self.queuedscene ~= nil then
+        if self.queuedargs ~= nil then
+            scenemanager:transitionscene(self.queuedscene, table.unpack(self.queuedargs))
+            self.queuedargs = nil
+        else
+            scenemanager:transitionscene(self.queuedscene)
+        end
+        queuedscene = nil
+    end
 end
 
 function scenemanager:switchscene(scene, ...)
@@ -25,26 +39,36 @@ function scenemanager:switchscene(scene, ...)
     end
     self:loadnewscene()
     self.transitioning = false
+    self.queuedscene = nil
+    self.queuedargs = nil
 end
 
 function scenemanager:transitionscene(scene, ...)
     if self.transitioning then return end
-    -- Pop any rogue input handlers, leaving the default one.
-    local inputsize = #playdate.inputHandlers - 1
-    for i = 1, inputsize do
-        pd.inputHandlers.pop()
-    end
-    self.transitioning = true
-    self.newscene = scene
-    self.sceneargs = {...}
-    local transitiontimer = self:transition(1, 13)
-    transitiontimer.timerEndedCallback = function()
-        self:loadnewscene()
-        transitiontimer = self:transition(14, 24)
-        transitiontimer.timerEndedCallback = function()
-            self.transitioning = false
-            self.sprite_curtains:remove()
+    if backtotitleopen then
+        self.queuedscene = scene
+        self.queuedargs = {...}
+        return
+    else
+        -- Pop any rogue input handlers, leaving the default one.
+        local inputsize = #playdate.inputHandlers - 1
+        for i = 1, inputsize do
+            pd.inputHandlers.pop()
         end
+        self.transitioning = true
+        self.newscene = scene
+        self.sceneargs = {...}
+        local transitiontimer = self:transition(1, 13)
+        transitiontimer.timerEndedCallback = function()
+            self:loadnewscene()
+            transitiontimer = self:transition(14, 24)
+            transitiontimer.timerEndedCallback = function()
+                self.transitioning = false
+                self.sprite_curtains:remove()
+            end
+        end
+        self.queuedscene = nil
+        self.queuedargs = nil
     end
 end
 

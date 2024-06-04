@@ -18,16 +18,16 @@ function rehearsal:init(...)
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
         menu:addMenuItem(text('slidetitle'), function()
+            if vars.showtime_timer ~= nil then
+                assets.timer:setPaused(true)
+                vars.showtime_timer:pause()
+            end
             backtotitle(function()
                 if vars.showtime_timer ~= nil then
                     vars.showtime_timer:start()
                     assets.timer:setPaused(false)
                 end
             end)
-            if vars.showtime_timer ~= nil then
-                vars.showtime_timer:pause()
-                assets.timer:setPaused(true)
-            end
         end)
     end
 

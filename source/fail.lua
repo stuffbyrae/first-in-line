@@ -43,7 +43,6 @@ function fail:init(...)
     }
     vars.failHandlers = {
         AButtonDown = function()
-            p1 = true
             scenemanager:transitionscene(rehearsal, 0, {})
             if save.sfx then assets.click:play() end
             fademusic()

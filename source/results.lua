@@ -43,9 +43,12 @@ function results:init(...)
     }
     vars.resultsHandlers = {
         AButtonDown = function()
-            p1 = true
+            pd.timer.performAfterDelay(650, function()
+                p1 = true
+            end)
             scenemanager:transitionscene(rehearsal, 0, {})
             if save.sfx then assets.click:play() end
+            fademusic()
         end,
 
         BButtonDown = function()

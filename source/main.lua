@@ -24,6 +24,7 @@ pd.setMenuImage(gfx.image.new('images/pause'))
 mode = "arcade"
 p1 = true
 easy = true
+backtotitleopen = false
 
 catalog = false
 if pd.metadata.bundleID == "wtf.rae.firstinline" then
@@ -127,6 +128,7 @@ function backtotitle(bcallback, acallback)
     local sasser = gfx.font.new('fonts/sasser')
     local small = gfx.font.new('fonts/small')
     local click = smp.new('audio/sfx/click')
+    backtotitleopen = true
     gfx.pushContext(image)
         gfx.setColor(gfx.kColorWhite)
         gfx.fillRect(10, 10, 380, 220)
@@ -150,6 +152,7 @@ function backtotitle(bcallback, acallback)
             click = nil
             sprite = nil
             backHandlers = nil
+            backtotitleopen = false
             scenemanager:transitionscene(title)
             if acallback ~= nil then
                 acallback()
@@ -163,6 +166,8 @@ function backtotitle(bcallback, acallback)
             click = nil
             sprite = nil
             backHandlers = nil
+            backtotitleopen = false
+            scenemanager:transitionscenequeued()
             if bcallback ~= nil then
                 bcallback()
             end

@@ -1,4 +1,5 @@
 import 'title'
+import 'credits'
 
 -- Setting up consts
 local pd <const> = playdate
