@@ -164,7 +164,7 @@ function play:init(...)
         assets.stage[vars.stage_rand]:draw(0, 0)
     end)
 
-    vars.person_rand = math.random(1, 5)
+    vars.person_rand = math.random(1, 12)
     vars.stage_rand = math.random(1, #assets.stage)
     vars.cast_rand = math.random(1, #assets.cast)
     assets.person = gfx.imagetable.new('images/person_' .. vars.person_rand)
