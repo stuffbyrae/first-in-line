@@ -1,3 +1,17 @@
+(source/fonts) Sasser Slab and Roobert fonts licensed by Panic, under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+
+(key art, source/images, source/fonts) Art and the rest of the graphical assets made by rae, under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+
+(source/play.lua) [Tanuk_CodeSequence](https://github.com/Schyzophrenic/Tanuk_CodeSequence) library made by Toad and Schyzo, under [MIT](https://github.com/Schyzophrenic/Tanuk_CodeSequence/blob/main/LICENSE)
+
+(source/audio/music) Music made by Kevin MacLeod, under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
+
+(source/audio/sfx) whisper and heckle SFX made by rae, under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+
+(source/audio/sfx) Other SFX sourced from Pixabay, under [their license](https://pixabay.com/service/terms/)
+
+The rest of the code made by rae
+
 MIT License
 
 Copyright (c) 2024 rae
