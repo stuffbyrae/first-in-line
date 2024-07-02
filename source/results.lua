@@ -23,7 +23,7 @@ function results:init(...)
             scenemanager:transitionscene(rehearsal, 0, {})
             fademusic()
         end)
-        menu:addMenuItem(text('slidesettings'), function()
+        menu:addMenuItem(text('slidetitle'), function()
             if save.sfx then assets.click:play() end
             scenemanager:switchscene(title)
         end)
@@ -46,7 +46,11 @@ function results:init(...)
             pd.timer.performAfterDelay(650, function()
                 p1 = true
             end)
-            scenemanager:transitionscene(rehearsal, 0, {})
+            if p1 then
+                scenemanager:transitionscene(rehearsal, 0, {})
+            else
+                scenemanager:transitionscene(pass, 0, {})
+            end
             if save.sfx then assets.click:play() end
             fademusic()
         end,

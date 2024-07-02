@@ -3,6 +3,7 @@ import 'rehearsal'
 import 'fail'
 import 'results'
 import 'shaker'
+import 'pass'
 
 -- Setting up consts
 local pd <const> = playdate
@@ -20,26 +21,28 @@ function play:init(...)
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
-        menu:addMenuItem(text('slidetitle'), function()
-            fademusic(0)
-            backtotitle(function()
+        if vars.in_progress and not scenemanager.transitioning then
+            menu:addMenuItem(text('slidetitle'), function()
+                fademusic(0)
+                backtotitle(function()
+                    if mode ~= "oneshot" then
+                        vars.pause:start()
+                    end
+                end,
+                function()
+                    assets.crowd:stop()
+                    assets.crowd_angry:stop()
+                    assets.applause_1:stop()
+                    assets.applause_2:stop()
+                    assets.applause_3:stop()
+                    assets.light_applause:stop()
+                    assets.footsteps:stop()
+                end)
                 if mode ~= "oneshot" then
-                    vars.pause:start()
+                    vars.pause:pause()
                 end
-            end,
-            function()
-                assets.crowd:stop()
-                assets.crowd_angry:stop()
-                assets.applause_1:stop()
-                assets.applause_2:stop()
-                assets.applause_3:stop()
-                assets.light_applause:stop()
-                assets.footsteps:stop()
             end)
-            if mode ~= "oneshot" then
-                vars.pause:pause()
-            end
-        end)
+        end
     end
 
     assets = { -- All assets go here. Images, sounds, fonts, etc.
@@ -87,6 +90,7 @@ function play:init(...)
         laugh_1 = smp.new('audio/sfx/laugh_1'),
         laugh_2 = smp.new('audio/sfx/laugh_2'),
         laugh_3 = smp.new('audio/sfx/laugh_3'),
+        shine = smp.new('audio/sfx/shine'),
     }
 
     vars = { -- All variables go here. Args passed in from earlier, scene variables, etc.
@@ -107,10 +111,11 @@ function play:init(...)
         roses = 0,
         crank = 0,
         totalcrank = 0,
-        lastcrank = 0,
+        oldcrank = 0,
         mic = 0,
         mic_cooldown = false,
         dock_dampen = false,
+        crank_cooldown = false,
     }
     vars.playHandlers = {
         AButtonDown = function()
@@ -178,7 +183,9 @@ function play:init(...)
         end
         assets.patch:draw(53, 0)
         assets.image_audience:draw(0, 200 + (10 * vars.anim_audience.value))
-        assets.miss[vars.misses + 1]:draw(20, 190)
+        if mode ~= "oneshot" then
+            assets.miss[vars.misses + 1]:draw(20, 190)
+        end
         if vars.button_text_string ~= '' then
             assets.speech[2]:draw(0, 5)
         end
@@ -234,8 +241,8 @@ function play:init(...)
     end
 
     -- Set the sprites
-    self.person = play_person()
-    self.hud = play_hud()
+    sprites.person = play_person()
+    sprites.hud = play_hud()
     self:add()
 
     assets.footsteps:setRate(1.25)
@@ -414,18 +421,26 @@ end
 
 function play:addrose()
     vars.roses += 1
-    self['rose_' .. vars.roses] = play_rose()
+    sprites['rose_' .. vars.roses] = play_rose()
 end
 
 function play:win()
-    vars.shaker:setEnabled(false)
-    pd.stopAccelerometer()
-    pd.sound.micinput.stopListening()
     if vars.in_progress then
+        if mode == "timed" then
+            if save.sfx then
+                assets.shine:play()
+            end
+            if easy then
+                timed_timer:resetnew(timed_timer.value + 20000, timed_timer.value + 20000, 0)
+            else
+                timed_timer:resetnew(timed_timer.value + 15000, timed_timer.value + 15000, 0)
+            end
+        end
+        vars.shaker:setEnabled(false)
+        pd.stopAccelerometer()
+        pd.sound.micinput.stopListening()
         vars.in_progress = false
-        if mode == "multi" then
-            p1 = not p1
-        else
+        if mode ~= "multi" then
             vars.score += 1
         end
         vars.anim_person = pd.timer.new(750, 15, 18.9)
@@ -442,16 +457,34 @@ function play:win()
         pd.timer.performAfterDelay(2000 + (500 * math.random()), function() self:addrose() end)
         pd.timer.performAfterDelay(3000, function()
             fademusic()
-            scenemanager:transitionscene(rehearsal, vars.score, vars.button_string)
+            if mode == "multi" then
+                scenemanager:transitionscene(pass, vars.score, vars.button_string)
+                p1 = not p1
+            elseif mode == "timed" and timed_timer.value == 0 then
+                scenemanager:transitionscene(fail, vars.score)
+                timed_sprite:setZIndex(999)
+                pd.timer.performAfterDelay(550, function()
+                    timed_sprite:remove()
+                    timed_sprite = nil
+                    timed_timer = nil
+                    timer_end = nil
+                end)
+            else
+                scenemanager:transitionscene(rehearsal, vars.score, vars.button_string)
+            end
         end)
     end
 end
 
 function play:lose()
-    vars.shaker:setEnabled(false)
-    pd.stopAccelerometer()
-    pd.sound.micinput.stopListening()
     if vars.in_progress then
+        if mode == "timed" then
+            timed_sprite:setZIndex(999)
+            timed_timer:pause()
+        end
+        vars.shaker:setEnabled(false)
+        pd.stopAccelerometer()
+        pd.sound.micinput.stopListening()
         vars.in_progress = false
         if save.sfx then assets.scratch:play() end
         vars.anim_person = pd.timer.new(500, 19, 20.9)
@@ -475,6 +508,14 @@ function play:lose()
             vars.anim_person = pd.timer.new(500, 23, 27)
         end)
         pd.timer.performAfterDelay(2000, function()
+            if mode == "timed" then
+                pd.timer.performAfterDelay(550, function()
+                    timed_sprite:remove()
+                    timed_sprite = nil
+                    timed_timer = nil
+                    timer_end = nil
+                end)
+            end
             if mode == "multi" then
                 scenemanager:transitionscene(results)
             else
@@ -520,15 +561,19 @@ function play:update()
     if save.crank then
         vars.crank = pd.getCrankChange()
         vars.totalcrank += math.floor(vars.crank)
-        if math.floor(vars.crank) == 0 then
+        if (math.floor(vars.crank) <= 0 and math.floor(vars.oldcrank) > 0) or (math.floor(vars.crank) > 0 and math.floor(vars.oldcrank) <= 0) then
             vars.totalcrank = 0
+            vars.crank_cooldown = false
         end
-        if vars.totalcrank >= 230 then
-            play:button(7)
+        vars.oldcrank = vars.crank
+        if vars.totalcrank >= 230 and not vars.crank_cooldown then
+            self:button(7)
             vars.totalcrank = 0
-        elseif vars.totalcrank <= -230 then
-            play:button(8)
+            vars.crank_cooldown = true
+        elseif vars.totalcrank <= -230 and not vars.crank_cooldown then
+            self:button(8)
             vars.totalcrank = 0
+            vars.crank_cooldown = true
         end
     end
     if save.mic then
@@ -537,12 +582,15 @@ function play:update()
         else
             vars.mic = pd.sound.micinput.getLevel()
         end
-        if vars.mic > 0.2 then
-            play:button(12)
+        if vars.mic > 0.4 then
+            self:button(12)
             vars.mic_cooldown = true
             pd.timer.performAfterDelay(750, function()
                 vars.mic_cooldown = false
             end)
         end
+    end
+    if vars.in_progress and mode == "timed" and timed_timer ~= nil and timed_timer.value == 0 then
+        self:lose()
     end
 end

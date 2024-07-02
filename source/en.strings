@@ -3,8 +3,14 @@
 "arcadedesc" = "the classic stageplay"
 "oneshot" = "One-Shot Mode"
 "oneshotdesc" = "one miss, and you're out"
+"oneshot_locked" = "One-Shot Mode"
+"oneshot_lockeddesc" = "one miss, and you're out\n(play arcade mode\n5 times to unlock!)"
 "multi" = "Multi Mode"
 "multidesc" = "pass and \"play\", for 2"
+"timed" = "Timed Mode"
+"timeddesc" = "you're on the clock!"
+"timed_locked" = "Timed Mode"
+"timed_lockeddesc" = "you're on the clock!\n(play arcade mode\n10 times to unlock!)"
 "highscores" = "High Scores"
 "highscoresdesc" = "view global high scores"
 "settings" = "Settings"
@@ -12,6 +18,7 @@
 "playgame" = "A play"
 "playgamehard" = "B hard - A easy"
 "select" = "A select"
+"ready" = "A ready!"
 
 -- Return to title
 "returnhead" = "Are you sure you wanna quit?"
@@ -19,6 +26,8 @@
 "returnprompts" = "B keep playing - A quit to title"
 
 -- gameplay
+"p1_pass" = "Please pass the Playdate\nover to Player 1."
+"p2_pass" = "Please pass the Playdate\nover to Player 2."
 "p1" = "player 1, your turn!"
 "p2" = "player 2, your turn!"
 "showtime" = "A showtime!"
@@ -30,6 +39,7 @@
 "highscore" = "high score: "
 "newhigh" = "(that's a new high!)"
 "oneshotunlocked" = "(one-shot mode unlocked!)"
+"timedunlocked" = "(timed mode unlocked!)"
 "hardunlocked" = "(hard difficulty unlocked!)"
 "gameoverprompts" = "B quit to title - A play again"
 "p1wins" = "Player 1 wins!!"
@@ -58,13 +68,15 @@
 "false" = "N"
 
 "music" = "music"
-"sfx" = "sfx"
+"sfx" = "sound fx"
 
-"crank" = "crank"
-"shaking" = "shaking"
-"mic" = "microphone"
+"crank" = "crank controls"
+"shaking" = "shake controls"
+"mic" = "mic controls"
 
 "viewcredits" = "view credits"
+"manual1" = "for more help, see the manual!"
+"manual2" = "C play.date/games/first-in-line"
 
 -- Credits
 "credits" = "Credits"
@@ -91,3 +103,4 @@
 "slidetitle" = "back to title"
 "slidesettings" = "to settings"
 "slideagain" = "play again"
+"act" = "act "

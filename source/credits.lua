@@ -55,7 +55,6 @@ function credits:init(...)
 		assets.small:drawTextAligned(text('creditsthanx2'), 200, 160, kTextAlignment.center)
 		assets.small:drawTextAligned(text('creditsrae'), 200, 185, kTextAlignment.center)
 		assets.small:drawTextAligned(text('creditsyou'), 200, 200, kTextAlignment.center)
-		assets.small:drawText('v' .. pd.metadata.version, 30, 220)
 		assets.small:drawTextAligned(text('back'), 370, 220, kTextAlignment.right)
 	end)
 

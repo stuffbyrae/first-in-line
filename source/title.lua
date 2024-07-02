@@ -49,8 +49,15 @@ function title:init(...)
     }
 
     table.insert(vars.selections, "arcade")
-    if save.arcade_plays >= 10 then
+    if save.arcade_plays >= 5 then
         table.insert(vars.selections, "oneshot")
+    else
+        table.insert(vars.selections, "oneshot_locked")
+    end
+    if save.arcade_plays >= 10 then
+        table.insert(vars.selections, "timed")
+    else
+        table.insert(vars.selections, "timed_locked")
     end
     table.insert(vars.selections, "multi")
     if catalog then
@@ -65,6 +72,8 @@ function title:init(...)
                 scenemanager:switchscene(scores)
             elseif vars.selections[vars.selection] == "settings" then
                 scenemanager:switchscene(settings)
+            elseif vars.selections[vars.selection] == "oneshot_locked" or vars.selections[vars.selection] == "timed_locked" then
+                return
             else
                 p1 = true
                 scenemanager:transitionscene(rehearsal, 0, {})
@@ -128,6 +137,14 @@ function title:init(...)
             else
                 assets.small:drawTextAligned(text('playgame'), 370, 220, kTextAlignment.right)
                 assets.small:drawTextAligned(text('high') .. text('colon') .. save.score_oneshot_easy, 227, 197, kTextAlignment.center)
+            end
+        elseif vars.selections[vars.selection] == "timed" then
+            if save.hard then
+                assets.small:drawTextAligned(text('playgamehard'), 370, 220, kTextAlignment.right)
+                assets.small:drawTextAligned(text('easy') .. text('colon') .. save.score_timed_easy .. text('separator') .. text('hard') .. text('colon') .. save.score_timed_hard, 227, 197, kTextAlignment.center)
+            else
+                assets.small:drawTextAligned(text('playgame'), 370, 220, kTextAlignment.right)
+                assets.small:drawTextAligned(text('high') .. text('colon') .. save.score_timed_easy, 227, 197, kTextAlignment.center)
             end
         elseif vars.selections[vars.selection] == "multi" then
             if save.hard then

@@ -56,7 +56,7 @@ function fail:init(...)
 
     save[mode .. '_plays'] += 1
 
-    if vars.score >= 25 then
+    if vars.score >= 10 then
         assets.image_fail = gfx.image.new('images/fail_good_' .. vars.image)
     else
         assets.image_fail = gfx.image.new('images/fail_bad_' .. vars.image)
@@ -80,41 +80,41 @@ function fail:init(...)
 
     if easy then
         if vars.score > save['score_' .. mode .. '_easy'] and vars.score > 0 then
-            if mode == "arcade" and vars.score >= 25 and not save.hard then
+            if mode == "arcade" and vars.score >= 21 and not save.hard then
                 vars.draw = 'hard'
                 save.hard = true
             else
                 vars.draw = 'new'
             end
             save['score_' .. mode .. '_easy'] = vars.score
-            if catalog then
-                pd.scoreboards.addScore(mode .. 'easy', vars.score .. vars.inputs, function(status, result)
-                    if pd.isSimulator == 1 then
-                        printTable(status)
-                        printTable(result)
-                    end
-                end)
-            end
+        end
+        if catalog then
+            pd.scoreboards.addScore(mode .. 'easy', vars.score .. vars.inputs, function(status, result)
+                if pd.isSimulator == 1 then
+                    printTable(status)
+                    printTable(result)
+                end
+            end)
         end
     else
         if vars.score > save['score_' .. mode .. '_hard'] and vars.score > 0 then
             vars.draw = 'new'
             save['score_' .. mode .. '_hard'] = vars.score
-            if catalog then
-                pd.scoreboards.addScore(mode .. 'hard', vars.score .. vars.inputs, function(status, result)
-                    if pd.isSimulator == 1 then
-                        printTable(status)
-                        printTable(result)
-                    end
-                end)
-            end
+        end
+        if catalog then
+            pd.scoreboards.addScore(mode .. 'hard', vars.score .. vars.inputs, function(status, result)
+                if pd.isSimulator == 1 then
+                    printTable(status)
+                    printTable(result)
+                end
+            end)
         end
     end
 
-    if mode == "arcade" then
-        if save.arcade_plays == 10 then
-            vars.draw = 'oneshot'
-        end
+    if mode == "arcade" and save.arcade_plays == 5 then
+        vars.draw = 'oneshot'
+    elseif mode == "arcade" and save.arcade_plays == 10 then
+        vars.draw = 'timed'
     end
 
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
@@ -125,6 +125,8 @@ function fail:init(...)
         assets.small:drawTextAligned(text('yourscore') .. vars.score, 200, 30, kTextAlignment.center)
         if vars.draw == 'hard' then
             assets.small:drawTextAligned(text('hardunlocked'), 200, 50, kTextAlignment.center)
+        elseif vars.draw == 'timed' then
+            assets.small:drawTextAligned(text('timedunlocked'), 200, 50, kTextAlignment.center)
         elseif vars.draw == 'oneshot' then
             assets.small:drawTextAligned(text('oneshotunlocked'), 200, 50, kTextAlignment.center)
         elseif vars.draw == 'new' then

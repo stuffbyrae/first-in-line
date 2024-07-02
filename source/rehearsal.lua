@@ -7,6 +7,7 @@ local gfx <const> = pd.graphics
 local smp <const> = pd.sound.sampleplayer
 local fle <const> = pd.sound.fileplayer
 local text <const> = gfx.getLocalizedText
+local floor <const> = math.floor
 
 class('rehearsal').extends(gfx.sprite) -- Create the scene's class
 function rehearsal:init(...)
@@ -17,18 +18,20 @@ function rehearsal:init(...)
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
-        menu:addMenuItem(text('slidetitle'), function()
-            if vars.showtime_timer ~= nil then
-                assets.timer:setPaused(true)
-                vars.showtime_timer:pause()
-            end
-            backtotitle(function()
+        if not scenemanager.transitioning then
+            menu:addMenuItem(text('slidetitle'), function()
                 if vars.showtime_timer ~= nil then
-                    vars.showtime_timer:start()
-                    assets.timer:setPaused(false)
+                    assets.timer:setPaused(true)
+                    vars.showtime_timer:pause()
                 end
+                backtotitle(function()
+                    if vars.showtime_timer ~= nil then
+                        vars.showtime_timer:start()
+                        assets.timer:setPaused(false)
+                    end
+                end)
             end)
-        end)
+        end
     end
 
     assets = { -- All assets go here. Images, sounds, fonts, etc.
@@ -54,8 +57,6 @@ function rehearsal:init(...)
         paper_rand = math.random(1, 2),
         showtime = false,
         showtime_timer = pd.timer.new(0, 0, 0),
-        anim_lines = pd.timer.new(0, 475, 475),
-        anim_lines_frames = pd.timer.new(0, 1, 1),
         startedthething = false,
     }
     vars.rehearsalHandlers = {
@@ -116,6 +117,47 @@ function rehearsal:init(...)
     else
         vars.button_string = args[2]
         vars.string_length = 0
+    end
+
+    if mode == "timed" and timed_timer == nil then
+        image_timer = gfx.image.new('images/timer')
+        roobert = gfx.font.new('fonts/roobert')
+        if easy then
+            timed_timer = pd.timer.new(60000, 60000, 0)
+        else
+            timed_timer = pd.timer.new(45000, 45000, 0)
+        end
+        timed_timer.delay = 2500
+        pd.timer.performAfterDelay(2501, function()
+            timed_timer.delay = 0
+        end)
+        timed_timer.discardOnCompletion = false
+        if save.sfx then
+            timer_end = smp.new('audio/sfx/timed')
+            timed_timer.timerEndedCallback = function()
+                timer_end:play()
+            end
+        end
+        class('timed_sprite').extends(gfx.sprite)
+        function timed_sprite:init()
+            timed_sprite.super.init(self)
+            self:setSize(72, 83)
+            self:moveTo(0, 0)
+            self:setCenter(0, 0)
+            self:setZIndex(999)
+            pd.timer.performAfterDelay(700, function()
+                self:setZIndex(26001)
+            end)
+            self:add()
+        end
+        function timed_sprite:update()
+            self:markDirty()
+        end
+        function timed_sprite:draw()
+            image_timer:draw(10, 10)
+            roobert:drawTextAligned(math.floor(timed_timer.value / 1000), 40, 36, kTextAlignment.center)
+        end
+        timed_sprite = timed_sprite()
     end
 
     for i = 1, #vars.button_string do
@@ -232,9 +274,14 @@ function rehearsal:init(...)
         self:markDirty()
     end
     function rehearsal_showtime:draw()
-        if not easy then
-            assets.image_timer:draw(10, 10)
-            assets.roobert:drawTextAligned(math.floor(vars.showtime_timer.timeLeft / 1000), 40, 36, kTextAlignment.center)
+        if not easy and mode ~= "timed" then
+            if mode == "multi" then
+                assets.image_timer:draw(10, 50)
+                assets.roobert:drawTextAligned(floor(vars.showtime_timer.timeLeft / 1000), 40, 76, kTextAlignment.center)
+            else
+                assets.image_timer:draw(10, 10)
+                assets.roobert:drawTextAligned(floor(vars.showtime_timer.timeLeft / 1000), 40, 36, kTextAlignment.center)
+            end
         end
         if mode == "multi" then
             gfx.setColor(gfx.kColorWhite)
@@ -246,6 +293,12 @@ function rehearsal:init(...)
             else
                 assets.small:drawTextAligned(text('p2'), 200, 19, kTextAlignment.center)
             end
+        else
+            gfx.setColor(gfx.kColorWhite)
+            gfx.fillRect(281, 10, 100, 34)
+            gfx.setColor(gfx.kColorBlack)
+            gfx.drawRect(284, 13, 94, 27)
+            assets.small:drawTextAligned(text('act') .. (vars.score + 1), 330, 19, kTextAlignment.center)
         end
         if vars.showtime then
             gfx.setColor(gfx.kColorWhite)
@@ -257,15 +310,15 @@ function rehearsal:init(...)
     end
 
     -- Set the sprites
-    self.lines = rehearsal_lines()
-    self.showtime = rehearsal_showtime()
+    sprites.lines = rehearsal_lines()
+    sprites.showtime = rehearsal_showtime()
     self:add()
 end
 
 function rehearsal:startthething()
     if not vars.startedthething then
         vars.startedthething = true
-        if not easy then
+        if not easy and mode ~= "timed" then
             vars.showtime_timer = pd.timer.new(math.min(10000 + math.ceil(vars.score / 10), 30000), function() self:time() end)
             vars.showtime_timer.delay = 2500
             if save.sfx then
@@ -302,10 +355,21 @@ function rehearsal:leave()
             assets.paper1:play()
         end
         vars.showtime = false
-        self.showtime:remove()
+        sprites.showtime:remove()
         vars.anim_lines = pd.timer.new(200, 240, 475, pd.easingFunctions.inSine)
         pd.timer.performAfterDelay(500, function()
-            scenemanager:transitionscene(play, vars.score, vars.button_string)
+            if mode == "timed" and timed_timer.value == 0 then
+                scenemanager:transitionscene(fail, vars.score)
+                timed_sprite:setZIndex(999)
+                pd.timer.performAfterDelay(550, function()
+                    timed_sprite:remove()
+                    timed_sprite = nil
+                    timed_timer = nil
+                    timer_end = nil
+                end)
+            else
+                scenemanager:transitionscene(play, vars.score, vars.button_string)
+            end
         end)
     end
 end
@@ -318,5 +382,8 @@ function rehearsal:update()
             vars.sprite:remove()
             vars.sprite = nil
         end
+    end
+    if mode == "timed" and timed_timer ~= nil and timed_timer.value == 0 then
+        self:leave()
     end
 end

@@ -2,11 +2,11 @@ local pd <const> = playdate
 local gfx <const> = pd.graphics
 local smp <const> = pd.sound.sampleplayer
 
-local curtains = gfx.imagetable.new('images/curtains')
-local curtain1 = smp.new('audio/sfx/curtain1')
-local curtain2 = smp.new('audio/sfx/curtain2')
-local curtain3 = smp.new('audio/sfx/curtain3')
-local curtain4 = smp.new('audio/sfx/curtain4')
+local curtains <const> = gfx.imagetable.new('images/curtains')
+local curtain1 <const> = smp.new('audio/sfx/curtain1')
+local curtain2 <const> = smp.new('audio/sfx/curtain2')
+local curtain3 <const> = smp.new('audio/sfx/curtain3')
+local curtain4 <const> = smp.new('audio/sfx/curtain4')
 
 class('scenemanager').extends()
 
@@ -112,12 +112,30 @@ function scenemanager:loadnewscene()
 end
 
 function scenemanager:cleanupscene()
-    assets = nil -- Nil all the assets,
-    vars = nil -- and nil all the variables.
+    -- gfx.sprite.removeAll()
     gfx.sprite.performOnAllSprites(function(sprite)
-        sprite:remove()
-        sprite = nil
+        if sprite.height ~= 83 then
+            sprite:remove()
+        end
     end)
+    if sprites ~= nil then
+        for i = 1, #sprites do
+            sprites[i] = nil
+        end
+    end
+    sprites = {}
+    if assets ~= nil then
+        for i = 1, #assets do
+            assets[i] = nil
+        end
+        assets = nil -- Nil all the assets,
+    end
+    if vars ~= nil then
+        for i = 1, #vars do
+            vars[i] = nil
+        end
+    end
+    vars = nil -- and nil all the variables.
     self:removealltimers() -- Remove every timer,
     collectgarbage('collect') -- and collect the garbage.
     gfx.setDrawOffset(0, 0) -- Lastly, reset the drawing offset. just in case.
@@ -126,7 +144,10 @@ end
 function scenemanager:removealltimers()
     local alltimers = pd.timer.allTimers()
     for _, timer in ipairs(alltimers) do
-        timer:remove()
-        timer = nil
+        if timed_timer ~= nil and timer.duration == timed_timer.duration then
+        else
+            timer:remove()
+            timer = nil
+        end
     end
 end

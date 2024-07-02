@@ -26,6 +26,7 @@ function scores:init(...)
         image_bg = gfx.image.new('images/bg'),
         image_bg_left = gfx.image.new('images/bg_left'),
         image_bg_right = gfx.image.new('images/bg_right'),
+        image_bg_both = gfx.image.new('images/bg_both'),
         sasser = gfx.font.new('fonts/sasser'),
         small = gfx.font.new('fonts/small'),
         spotlight = smp.new('audio/sfx/spotlight'),
@@ -40,6 +41,8 @@ function scores:init(...)
         result = {},
         best = {},
         loading = true,
+        boards = {'arcade'},
+        board_selection = 1,
     }
     vars.scoresHandlers = {
         AButtonDown = function()
@@ -55,30 +58,47 @@ function scores:init(...)
         end,
 
         leftButtonDown = function()
-            if vars.mode == "oneshot" and not vars.loading then
-                vars.mode = "arcade"
+            if vars.board_selection > 1 and not vars.loading then
+                vars.board_selection -= 1
+                vars.mode = vars.boards[vars.board_selection]
                 self:refreshboards()
             end
         end,
 
         rightButtonDown = function()
-            if save.arcade_plays >= 10 and vars.mode == "arcade" and not vars.loading then
-                vars.mode = "oneshot"
+            if vars.board_selection < #vars.boards and not vars.loading then
+                vars.board_selection += 1
+                vars.mode = vars.boards[vars.board_selection]
                 self:refreshboards()
             end
         end,
     }
 
+    if save.arcade_plays >= 5 then
+        table.insert(vars.boards, 'oneshot')
+    end
+    if save.arcade_plays >= 10 then
+        table.insert(vars.boards, 'timed')
+    end
+
     gfx.sprite.setBackgroundDrawingCallback(function(x, y, width, height) -- Background drawing
         if vars.showtime then
-            if save.arcade_plays >= 10 and not vars.loading then
-                if vars.mode == "arcade" then
+            if #vars.boards == 1 then
+                assets.image_bg:draw(0, 0)
+            elseif #vars.boards == 2 then
+                if vars.board_selection == 1 then
                     assets.image_bg_right:draw(0, 0)
-                elseif vars.mode == "oneshot" then
+                else
                     assets.image_bg_left:draw(0, 0)
                 end
             else
-                assets.image_bg:draw(0, 0)
+                if vars.board_selection == 1 then
+                    assets.image_bg_right:draw(0, 0)
+                elseif vars.board_selection == #vars.boards then
+                    assets.image_bg_left:draw(0, 0)
+                else
+                    assets.image_bg_both:draw(0, 0)
+                end
             end
             gfx.setImageDrawMode(gfx.kDrawModeNXOR)
             assets.sasser:drawTextAligned(text(vars.mode), 200, 10, kTextAlignment.center)

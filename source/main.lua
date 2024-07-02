@@ -35,8 +35,8 @@ end
 function savecheck()
     save = pd.datastore.read()
     if save == nil then save = {} end
-    if save.hard == nil then save.hard = false end
     if save.music == nil then save.music = true end
+    if save.hard == nil then save.hard = false end
     if save.sfx == nil then save.sfx = true end
     if save.crank == nil then save.crank = true end
     if save.shaking == nil then save.shaking = false end
@@ -45,8 +45,11 @@ function savecheck()
     save.score_arcade_hard = save.score_arcade_hard or 0
     save.score_oneshot_easy = save.score_oneshot_easy or 0
     save.score_oneshot_hard = save.score_oneshot_hard or 0
+    save.score_timed_easy = save.score_timed_easy or 0
+    save.score_timed_hard = save.score_timed_hard or 0
     save.arcade_plays = save.arcade_plays or 0
     save.oneshot_plays = save.oneshot_plays or 0
+    save.timed_plays = save.timed_plays or 0
     save.multi_plays = save.multi_plays or 0
     save.misses = save.misses or 0
     save.hints = save.hints or 0
@@ -55,6 +58,11 @@ end
 
 -- ... now we run that!
 savecheck()
+
+-- Hard mode sanity check.
+if save.score_arcade_easy >= 21 then
+    save.hard = true
+end
 
 -- When the game closes...
 function pd.gameWillTerminate()
@@ -108,6 +116,30 @@ function newmusic(file, loop, range)
     end
 end
 
+function pd.timer:resetnew(duration, startValue, endValue, easingFunction)
+    self.duration = duration
+    if startValue ~= nil then
+        self._startValue = startValue
+        self.originalValues.startValue = startValue
+        self._endValue = endValue or 0
+        self.originalValues.endValue = endValue or 0
+        self._easingFunction = easingFunction or pd.easingFunctions.linear
+        self.originalValues.easingFunction = easingFunction or pd.easingFunctions.linear
+        self._currentTime = 0
+        self.value = self._startValue
+    end
+    self._lastTime = nil
+    self.active = true
+    self.hasReversed = false
+    self.reverses = false
+    self.repeats = false
+    self.remainingDelay = self.delay
+    self._calledOnRepeat = nil
+    self.discardOnCompletion = false
+    self.paused = false
+    self.timerEndedCallback = self.timerEndedCallback
+end
+
 -- This function returns the inputted number, with the ordinal suffix tacked on at the end (as a string)
 function ordinal(num)
     local m10 = num % 10 -- This is the number, modulo'd by 10.
@@ -128,6 +160,10 @@ function backtotitle(bcallback, acallback)
     local sasser = gfx.font.new('fonts/sasser')
     local small = gfx.font.new('fonts/small')
     local click = smp.new('audio/sfx/click')
+    if mode == "timed" then
+        timed_sprite:setZIndex(998)
+        timed_timer:pause()
+    end
     backtotitleopen = true
     gfx.pushContext(image)
         gfx.setColor(gfx.kColorWhite)
@@ -153,6 +189,14 @@ function backtotitle(bcallback, acallback)
             sprite = nil
             backHandlers = nil
             backtotitleopen = false
+            if mode == "timed" then
+                pd.timer.performAfterDelay(700, function()
+                    timed_sprite:remove()
+                    timed_sprite = nil
+                    timed_timer = nil
+                    timer_end = nil
+                end)
+            end
             scenemanager:transitionscene(title)
             if acallback ~= nil then
                 acallback()
@@ -162,6 +206,10 @@ function backtotitle(bcallback, acallback)
         BButtonDown = function()
             pd.inputHandlers.pop()
             sprite:remove()
+            if mode == "timed" then
+                timed_sprite:setZIndex(26001)
+                timed_timer:start()
+            end
             if save.sfx then click:play() end
             click = nil
             sprite = nil
