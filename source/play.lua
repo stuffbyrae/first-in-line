@@ -11,6 +11,8 @@ local gfx <const> = pd.graphics
 local smp <const> = pd.sound.sampleplayer
 local fle <const> = pd.sound.fileplayer
 local text <const> = gfx.getLocalizedText
+local exp <const> = math.exp
+local min <const> = math.min
 
 class('play').extends(gfx.sprite) -- Create the scene's class
 function play:init(...)
@@ -431,9 +433,9 @@ function play:win()
                 assets.shine:play()
             end
             if easy then
-                timed_timer:resetnew(timed_timer.value + 20000, timed_timer.value + 20000, 0)
+                timed_timer:resetnew(min(timed_timer.value + (20000 * exp(-0.001 * timer_progress)) + 10000, 60000), min(timed_timer.value + (20000 * exp(-0.01 * timer_progress)) + 10000, 60000), 0)
             else
-                timed_timer:resetnew(timed_timer.value + 15000, timed_timer.value + 15000, 0)
+                timed_timer:resetnew(min(timed_timer.value + (15000 * exp(-0.001 * timer_progress)) + 7500, 60000), min(timed_timer.value + (15000 * exp(-0.01 * timer_progress)) + 7500, 60000), 0)
             end
         end
         vars.shaker:setEnabled(false)
@@ -481,6 +483,7 @@ function play:lose()
         if mode == "timed" then
             timed_sprite:setZIndex(999)
             timed_timer:pause()
+            timer_progress = nil
         end
         vars.shaker:setEnabled(false)
         pd.stopAccelerometer()

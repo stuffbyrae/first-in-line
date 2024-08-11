@@ -18,7 +18,7 @@ function rehearsal:init(...)
     function pd.gameWillPause() -- When the game's paused...
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
-        if not scenemanager.transitioning then
+        if not scenemanager.transitioning and ((easy) or (not easy and vars.showtime_timer.timeLeft ~= vars.showtime_timer_start)) then
             menu:addMenuItem(text('slidetitle'), function()
                 if vars.showtime_timer ~= nil then
                     assets.timer:setPaused(true)
@@ -127,6 +127,7 @@ function rehearsal:init(...)
         else
             timed_timer = pd.timer.new(45000, 45000, 0)
         end
+        timer_progress = 1
         timed_timer.delay = 2500
         pd.timer.performAfterDelay(2501, function()
             timed_timer.delay = 0
@@ -319,6 +320,7 @@ function rehearsal:startthething()
     if not vars.startedthething then
         vars.startedthething = true
         if not easy and mode ~= "timed" then
+            vars.showtime_timer_start = math.min(10000 + math.ceil(vars.score / 10), 30000)
             vars.showtime_timer = pd.timer.new(math.min(10000 + math.ceil(vars.score / 10), 30000), function() self:time() end)
             vars.showtime_timer.delay = 2500
             if save.sfx then

@@ -195,6 +195,7 @@ function backtotitle(bcallback, acallback)
                     timed_sprite = nil
                     timed_timer = nil
                     timer_end = nil
+                    timer_progress = nil
                 end)
             end
             scenemanager:transitionscene(title)
@@ -233,4 +234,7 @@ function pd.update()
     -- Catch-all stuff ...
     gfx.sprite.update()
     pd.timer.updateTimers()
+    if timer_progress ~= nil and not backtotitleopen then
+        timer_progress += 0.001
+    end
 end

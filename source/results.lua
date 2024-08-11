@@ -18,9 +18,15 @@ function results:init(...)
         local menu = pd.getSystemMenu()
         menu:removeAllMenuItems()
         menu:addMenuItem(text('slideagain'), function()
+            if p1 then
+                scenemanager:transitionscene(rehearsal, 0, {})
+            else
+                scenemanager:transitionscene(pass, 0, {})
+            end
+            pd.timer.performAfterDelay(650, function()
+                p1 = true
+            end)
             if save.sfx then assets.click:play() end
-            p1 = true
-            scenemanager:transitionscene(rehearsal, 0, {})
             fademusic()
         end)
         menu:addMenuItem(text('slidetitle'), function()
@@ -43,14 +49,14 @@ function results:init(...)
     }
     vars.resultsHandlers = {
         AButtonDown = function()
-            pd.timer.performAfterDelay(650, function()
-                p1 = true
-            end)
             if p1 then
                 scenemanager:transitionscene(rehearsal, 0, {})
             else
                 scenemanager:transitionscene(pass, 0, {})
             end
+            pd.timer.performAfterDelay(400, function()
+                p1 = true
+            end)
             if save.sfx then assets.click:play() end
             fademusic()
         end,
