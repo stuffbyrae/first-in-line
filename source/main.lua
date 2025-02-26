@@ -5,7 +5,9 @@ import 'CoreLibs/object'
 import 'CoreLibs/sprites'
 import 'CoreLibs/graphics'
 import 'CoreLibs/animation'
+import 'achievements'
 import 'scenemanager'
+import 'cheevos'
 import 'title'
 scenemanager = scenemanager()
 
@@ -64,8 +66,26 @@ if save.score_arcade_easy >= 21 then
     save.hard = true
 end
 
+achievements.initialize(achievementData, false)
+
+function updatecheevos()
+	achievements.advanceTo("act5", save.score_arcade_easy + 1)
+	achievements.advanceTo("act10", save.score_arcade_easy + 1)
+	achievements.advanceTo("act25", save.score_arcade_easy + 1)
+	achievements.advanceTo("act50", save.score_arcade_easy + 1)
+	if save.score_arcade_easy >= 21 then achievements.grant("hard") end
+	if save.arcade_plays >= 5 then achievements.grant("oneshot") end
+	if save.arcade_plays >= 10 then achievements.grant("timed") end
+	if save.multi_plays > 0 then achievements.grant("multi") end
+	if save.heckles > 0 then achievements.grant("heckled") end
+	achievements.save()
+end
+
+updatecheevos()
+
 -- When the game closes...
 function pd.gameWillTerminate()
+	updatecheevos()
     pd.datastore.write(save)
     if pd.isSimulator ~= 1 then
         local img = gfx.getDisplayImage()
@@ -83,6 +103,7 @@ function pd.gameWillTerminate()
 end
 
 function pd.deviceWillSleep()
+	updatecheevos()
     pd.datastore.write(save)
 end
 

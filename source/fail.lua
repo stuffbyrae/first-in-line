@@ -150,6 +150,11 @@ function fail:init(...)
 
     newmusic('audio/music/music1', true)
 
+	if save.crank and save.shaking and save.mic then
+		achievements.grant("multitasker")
+	end
+	updatecheevos()
+
     -- Set the sprites
     self:add()
 end

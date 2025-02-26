@@ -96,6 +96,8 @@ function results:init(...)
 
     newmusic('audio/music/music1', true)
 
+	updatecheevos()
+
     -- Set the sprites
     self:add()
 end
